@@ -1,0 +1,16 @@
+/* Журнал действий v16 (renderAudit): таблица записей, карточка записи с трассировкой. */
+.lsr-audit-topline { display: flex; align-items: center; gap: 8px; color: var(--lsr-sub); margin-bottom: 15px; font-size: 12px; }
+.lsr-audit-topline button { appearance: none; background: none; border: 0; color: var(--lsr-blue); font-weight: 650; padding: 0; font: inherit; font-weight: 650; cursor: pointer; }
+.lsr-audit-topline b { color: var(--lsr-text); font-weight: 650; }
+.lsr-audit-time { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lsr-audit-action { font-weight: 690; color: var(--lsr-ink); overflow-wrap: anywhere; }
+.lsr-audit-reason { font-size: 11px; color: var(--lsr-blue); margin-top: 3px; overflow-wrap: anywhere; }
+.lsr-audit-items > div { display: flex; justify-content: space-between; gap: 16px; padding: 12px 19px; border-bottom: 1px solid var(--lsr-line2); align-items: center; font-size: 13px; }
+.lsr-audit-items > div:last-child { border-bottom: 0; }
+.lsr-audit-items b { font-size: 13px; flex: none; }
+.lsr-audit-items span { text-align: right; overflow-wrap: anywhere; min-width: 0; }
+.lsr-audit-block { margin-top: 16px; }
+.lsr-audit-block > label { display: block; font-size: 12px; color: #53657d; font-weight: 650; margin-bottom: 6px; }
+.lsr-audit-detailbox { background: #f7f9fc; padding: 13px; border-radius: 8px; font-size: 12px; color: #617088; overflow-wrap: anywhere; white-space: pre-wrap; }
+.lsr-audit-embedded .lsr-toolbar { padding: 0 0 12px; border-bottom: 0; }
+.lsr-audit-embedded .lsr-audit-topline { margin-bottom: 12px; }

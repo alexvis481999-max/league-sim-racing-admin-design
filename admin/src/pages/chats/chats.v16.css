@@ -1,0 +1,22 @@
+/* Чаты v16 (renderChats): список чатов, журнал проверок, объявление, проверка переписки по причине. */
+.lsr-chat-topline { display: flex; align-items: center; gap: 8px; color: var(--lsr-sub); margin-bottom: 15px; font-size: 12px; }
+.lsr-chat-topline button { appearance: none; background: none; border: 0; color: var(--lsr-blue); font: inherit; font-weight: 650; padding: 0; cursor: pointer; }
+.lsr-chat-topline b { color: var(--lsr-text); font-weight: 650; }
+.lsr-chat-open { appearance: none; background: none; border: 0; padding: 0; font: inherit; font-weight: 690; color: var(--lsr-ink); text-align: left; cursor: pointer; }
+.lsr-chat-open:hover { color: var(--lsr-blue); }
+.lsr-chat-items > div { display: flex; justify-content: space-between; gap: 16px; padding: 12px 19px; border-bottom: 1px solid var(--lsr-line2); align-items: center; font-size: 13px; }
+.lsr-chat-items > div:last-child { border-bottom: 0; }
+.lsr-chat-items b { font-size: 13px; }
+.lsr-chat-items span { text-align: right; overflow-wrap: anywhere; min-width: 0; }
+.lsr-chat-messages { display: grid; }
+.lsr-chat-message { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; padding: 12px 19px; border-bottom: 1px solid var(--lsr-line2); align-items: start; }
+.lsr-chat-message:last-child { border-bottom: 0; }
+.lsr-chat-message.is-system { background: #fafbfd; }
+.lsr-chat-message.is-hidden .lsr-chat-body { color: var(--lsr-sub); }
+.lsr-chat-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--lsr-sub); }
+.lsr-chat-meta b { color: var(--lsr-ink); font-size: 13px; }
+.lsr-chat-body { grid-column: 1; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; color: var(--lsr-text); }
+.lsr-chat-message > .lsr-btn { grid-column: 2; grid-row: 1 / span 2; }
+.lsr-chat-pad { padding: 16px 19px; }
+.lsr-chat-embedded .lsr-toolbar { padding: 0 0 12px; border-bottom: 0; }
+.lsr-chat-embedded .lsr-subtabs { align-self: flex-start; }
