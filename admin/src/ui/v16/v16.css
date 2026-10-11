@@ -292,7 +292,7 @@ body { margin: 0; background: var(--lsr-bg); color: var(--lsr-ink); font: 14px/1
 .lsr-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .lsr-field.is-full { grid-column: 1 / -1; }
 .lsr-field > label, .lsr-field-label { font-size: 12px; font-weight: 680; color: var(--lsr-text); }
-.lsr-field input:not([type=checkbox]):not([type=radio]), .lsr-field select, .lsr-field textarea { width: 100%; border: 1px solid #d5dce6; border-radius: 8px; padding: 9px 11px; min-height: 38px; background: #fff; color: var(--lsr-ink); }
+.lsr-field input:not([type=checkbox]):not([type=radio]):not(.MuiInputBase-input), .lsr-field select:not(.MuiInputBase-input), .lsr-field textarea:not(.MuiInputBase-input) { width: 100%; border: 1px solid #d5dce6; border-radius: 8px; padding: 9px 11px; min-height: 38px; background: #fff; color: var(--lsr-ink); }
 .lsr-field textarea { resize: vertical; min-height: 80px; }
 .lsr-field input:disabled, .lsr-field select:disabled, .lsr-field textarea:disabled { background: #f2f4f7; color: #76879b; }
 .lsr-field small, .lsr-help { font-size: 11px; color: var(--lsr-sub); }

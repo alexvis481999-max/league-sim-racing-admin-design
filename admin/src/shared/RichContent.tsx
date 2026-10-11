@@ -207,6 +207,8 @@ export function RichDescriptionEditor({
   const [imageLayout, setImageLayout] = useState<ImageLayout>('full');
   const [imageWidth, setImageWidth] = useState<ImageWidth>(100);
   const [imageSelected, setImageSelected] = useState(false);
+  // Alt text is mirrored in state so the field never reads the DOM ref during render.
+  const [imageAlt, setImageAlt] = useState('');
   const [previewTheme, setPreviewTheme] = useState<EditorPreviewTheme>(readEditorPreviewTheme);
   const [customTextColor, setCustomTextColor] = useState<string | null>(null);
   const [customFillColor, setCustomFillColor] = useState<string | null>(null);
@@ -309,6 +311,7 @@ export function RichDescriptionEditor({
     selectedImageRef.current = insertedImage;
     insertedImage?.classList.add('is-editor-selected');
     setImageSelected(Boolean(insertedImage));
+    setImageAlt(insertedImage?.alt ?? '');
     emitChange();
     setImageDialogOpen(false);
   }
@@ -608,8 +611,9 @@ export function RichDescriptionEditor({
           <TextField
             label="Альтернативный текст изображения"
             size="small"
-            value={selectedImageRef.current?.alt ?? ''}
+            value={imageAlt}
             onChange={(e) => {
+              setImageAlt(e.target.value);
               if (selectedImageRef.current) {
                 selectedImageRef.current.alt = e.target.value;
                 emitChange();
@@ -745,6 +749,7 @@ export function RichDescriptionEditor({
               selectedImageRef.current?.classList.remove('is-editor-selected');
               selectedImageRef.current = target instanceof HTMLImageElement ? target : null;
               setImageSelected(target instanceof HTMLImageElement);
+              setImageAlt(target instanceof HTMLImageElement ? target.alt : '');
               if (target instanceof HTMLImageElement) {
                 target.classList.add('is-editor-selected');
                 setImageLayout(
