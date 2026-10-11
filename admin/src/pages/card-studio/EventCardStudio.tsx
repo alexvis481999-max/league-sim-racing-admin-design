@@ -1,24 +1,8 @@
 import type { PublicEvent } from '../../../../shared/public-event';
-import {
-  Box,
-  Checkbox,
-  Chip,
-  Divider,
-  FormControl,
-  FormControlLabel,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Select,
-  Slider,
-  Stack,
-  TextField,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
-} from '@mui/material';
+import { Box, Chip, Paper, Stack, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { Checkbox, SelectField } from '../../ui/v16';
 import {
   cloneEventCardStudioConfig,
   defaultEventCardStudioConfig,
@@ -27,6 +11,7 @@ import {
   type ThemeCardSettings,
 } from './eventCardConfig';
 import type { EventDetails } from '../../shared/types';
+import './card-studio.v16.css';
 
 export type CardMode = 'single' | 'weekly' | 'championship' | 'tournament' | 'time_attack' | 'practice';
 
@@ -144,6 +129,8 @@ export function EventCardStudioPanel({
     showAllTemplates ? ALL_TEMPLATES.map((template) => template.mode) : [activeTemplate.mode]
   ), [activeTemplate.mode, showAllTemplates]);
   const displayedPreviewTheme = showEditor ? config.previewTheme : readOnlyPreviewTheme;
+  const split = !(compact || showAllTemplates || !showEditor || stackPreviews);
+  const stackedVariants = showAllTemplates || !showEditor || stackPreviews;
 
   function setConfig(next: EventCardStudioConfig) {
     if (onChange) onChange(next);
@@ -168,73 +155,50 @@ export function EventCardStudioPanel({
   }
 
   return (
-    <Stack spacing={compact ? 1.25 : 2}>
-      <Stack direction={compact || showAllTemplates || !showEditor || stackPreviews ? 'column' : { xs: 'column', lg: 'row' }} spacing={1.5} alignItems="stretch">
-        {showEditor ? <EditorPanel config={config} update={update} updateTheme={updateTheme} /> : null}
-        <Stack spacing={1.25} sx={{ flex: 1, minWidth: 0 }}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} justifyContent="space-between" gap={1}>
-            <Typography variant="h6" sx={{ fontWeight: 850 }}>{title}</Typography>
-            <ToggleButtonGroup
-              size="small"
-              exclusive
-              value={displayedPreviewTheme}
-              onChange={(_, nextTheme: PreviewTheme | null) => {
-                if (!nextTheme) return;
-                if (showEditor) update('previewTheme', nextTheme);
-                else setReadOnlyPreviewTheme(nextTheme);
-              }}
+    <div className={`lsr-cards-studio${split ? ' is-split' : ''}${compact ? ' is-compact' : ''}`}>
+      {showEditor ? <EditorPanel config={config} update={update} updateTheme={updateTheme} /> : null}
+      <div className="lsr-cards-previews">
+        <div className="lsr-cards-previews-head">
+          <h3>{title}</h3>
+          <Segment
+            label="Тема предпросмотра"
+            value={displayedPreviewTheme}
+            options={[{ value: 'dark', label: 'Тёмная тема' }, { value: 'light', label: 'Светлая тема' }]}
+            onChange={(nextTheme) => {
+              if (showEditor) update('previewTheme', nextTheme as PreviewTheme);
+              else setReadOnlyPreviewTheme(nextTheme as PreviewTheme);
+            }}
+          />
+        </div>
+        <div className={`lsr-cards-variants${stackedVariants ? ' is-stacked' : ''}`}>
+          {previewVariants.map((variant) => (
+            <div
+              key={variant}
+              className={`lsr-cards-variant${compact || !showEditor ? ' is-fixed' : ''}`}
+              style={compact ? { width: variant === 'home' ? 255 : 360 } : undefined}
             >
-              <ToggleButton value="dark">Dark</ToggleButton>
-              <ToggleButton value="light">Light</ToggleButton>
-            </ToggleButtonGroup>
-          </Stack>
-          <Stack direction={showAllTemplates || !showEditor || stackPreviews ? 'column' : { xs: 'column', md: 'row' }} spacing={1.5} alignItems="flex-start" useFlexGap flexWrap="wrap">
-            {previewVariants.map((variant) => (
-              <Stack
-                key={variant}
-                spacing={0.75}
-                sx={{
-                  flex: compact || !showEditor ? '0 0 auto' : 1,
-                  width: compact ? variant === 'home' ? 255 : 360 : 'auto',
-                  maxWidth: '100%',
-                  minWidth: 0,
-                }}
+              {showEditor || previewVariants.length > 1 ? (
+                <div className="lsr-cards-variant-label">{variant === 'events' ? 'Страница событий' : 'Главная'}</div>
+              ) : null}
+              <div
+                className={`lsr-cards-stage${compact ? ' is-compact' : ''}${displayedPreviewTheme === 'light' ? ' is-light' : ''}`}
+                style={{ maxWidth: compact ? '100%' : PUBLIC_PREVIEW_WIDTH[variant] + 26 }}
               >
-                {showEditor || previewVariants.length > 1 ? (
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                    {variant === 'events' ? 'Страница событий' : 'Главная'}
-                  </Typography>
-                ) : null}
-                <Box
-                  sx={{
-                    display: 'block',
-                    p: compact ? 0 : 1.5,
-                    borderRadius: 2,
-                    bgcolor: compact ? 'transparent' : displayedPreviewTheme === 'dark' ? '#070a0f' : '#f4f1eb',
-                    border: compact ? 0 : '1px solid',
-                    borderColor: displayedPreviewTheme === 'dark' ? 'rgba(255,255,255,0.08)' : '#d8dedf',
-                    maxWidth: compact ? '100%' : PUBLIC_PREVIEW_WIDTH[variant] + 26,
-                    mx: compact ? 0 : 'auto',
-                    width: '100%',
-                    overflowX: 'auto',
-                  }}
-                >
-                  <PublicEventCardPreview
-                    variant={variant}
-                    source={source}
-                    config={{ ...config, previewTheme: displayedPreviewTheme }}
-                    modes={previewModes}
-                    compact={compact}
-                    eventDetails={eventDetails ?? source.eventDetails}
-                    publicEvent={publicEvent ?? source.publicEvent}
-                  />
-                </Box>
-              </Stack>
-            ))}
-          </Stack>
-        </Stack>
-      </Stack>
-    </Stack>
+                <PublicEventCardPreview
+                  variant={variant}
+                  source={source}
+                  config={{ ...config, previewTheme: displayedPreviewTheme }}
+                  modes={previewModes}
+                  compact={compact}
+                  eventDetails={eventDetails ?? source.eventDetails}
+                  publicEvent={publicEvent ?? source.publicEvent}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -314,6 +278,11 @@ export function PublicEventCardPreview({
   </Box>;
 }
 
+const VISIBILITY: [keyof EventCardStudioConfig, string][] = [
+  ['showEventType', 'Тип события'], ['showOrganizer', 'Организатор'], ['showTitle', 'Название'], ['showTrack', 'Трасса'], ['showDate', 'Дата'],
+  ['showDateLabel', 'Подпись даты'], ['showStatus', 'Статус'], ['showDetails', 'Детали'], ['showRating', 'Рейтинг'], ['showImage', 'Фото'],
+];
+
 function EditorPanel({
   config,
   update,
@@ -326,248 +295,120 @@ function EditorPanel({
   const theme = config.themes[config.previewTheme];
 
   return (
-    <Paper
-      variant="outlined"
-      sx={{
-        p: 1,
-        borderRadius: 1,
-        width: '100%',
-        flexShrink: 0,
-        '& .MuiInputBase-root': { minHeight: 36 },
-        '& .MuiSelect-select': { py: '7px' },
-        '& .MuiInputLabel-root': { fontSize: 14, fontWeight: 400 },
-      }}
-    >
-      <Stack spacing={0.8}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
-          <Typography sx={{ fontWeight: 850 }}>Настройки карточки</Typography>
-          <Chip size="small" label="Для всех карточек" />
-        </Stack>
+    <section className="lsr-cards-editor" aria-label="Настройки карточки">
+      <div className="lsr-cards-editor-head">
+        <h3>Настройки карточки</h3>
+        <span className="lsr-small-tag">Для всех карточек события · {config.previewTheme === 'dark' ? 'тёмная тема' : 'светлая тема'}</span>
+      </div>
 
-        <Box>
-          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800 }}>Компоненты</Typography>
-          <Stack direction="row" flexWrap="wrap" gap={0.25} sx={{ mt: 0.5 }}>
-            <SectionCheckbox label="Тип события" checked={config.showEventType} onChange={() => update('showEventType', !config.showEventType)} />
-            <SectionCheckbox label="Бренд" checked={config.showOrganizer} onChange={() => update('showOrganizer', !config.showOrganizer)} />
-            <SectionCheckbox label="Название" checked={config.showTitle} onChange={() => update('showTitle', !config.showTitle)} />
-            <SectionCheckbox label="Трасса" checked={config.showTrack} onChange={() => update('showTrack', !config.showTrack)} />
-            <SectionCheckbox label="Дата" checked={config.showDate} onChange={() => update('showDate', !config.showDate)} />
-            <SectionCheckbox label="Подпись даты" checked={config.showDateLabel} onChange={() => update('showDateLabel', !config.showDateLabel)} />
-            <SectionCheckbox label="Статус" checked={config.showStatus} onChange={() => update('showStatus', !config.showStatus)} />
-            <SectionCheckbox label="Детали" checked={config.showDetails} onChange={() => update('showDetails', !config.showDetails)} />
-            <SectionCheckbox label="Рейтинг" checked={config.showRating} onChange={() => update('showRating', !config.showRating)} />
-            <SectionCheckbox label="Фото" checked={config.showImage} onChange={() => update('showImage', !config.showImage)} />
-          </Stack>
-        </Box>
+      <div className="lsr-cards-block">
+        <div className="lsr-cards-caption">Элементы карточки</div>
+        <div className="lsr-cards-checks">
+          {VISIBILITY.map(([key, label]) => (
+            <Checkbox key={key} label={label} checked={Boolean(config[key])} onChange={() => update(key, !config[key] as never)} />
+          ))}
+        </div>
+      </div>
 
-        <Divider />
+      <div className="lsr-cards-groups">
+        <SettingGroup title="Текст">
+          <div className="lsr-cards-row">
+            <SelectField label="Шрифт" value={config.fontFamily} options={FONT_OPTIONS} onChange={(event) => update('fontFamily', event.target.value)} />
+            <SelectField
+              label="Толщина"
+              value={String(config.titleWeight)}
+              options={[700, 800, 900].map((weight) => ({ value: String(weight), label: String(weight) }))}
+              onChange={(event) => update('titleWeight', Number(event.target.value) as EventCardStudioConfig['titleWeight'])}
+            />
+          </div>
+          <SettingLine label="Горизонталь">
+            <Segment label="Горизонтальное выравнивание" value={config.textAlign} onChange={(value) => update('textAlign', value as EventCardStudioConfig['textAlign'])}
+              options={[{ value: 'left', label: 'Лево' }, { value: 'center', label: 'Центр' }, { value: 'right', label: 'Право' }]} />
+          </SettingLine>
+          <SettingLine label="Вертикаль">
+            <Segment label="Вертикальное положение" value={config.verticalAlign} onChange={(value) => update('verticalAlign', value as EventCardStudioConfig['verticalAlign'])}
+              options={[{ value: 'top', label: 'Верх' }, { value: 'center', label: 'Центр' }, { value: 'bottom', label: 'Низ' }]} />
+          </SettingLine>
+          <div className="lsr-cards-row">
+            <ColorField label="Название" value={theme.titleColor} onChange={(value) => updateTheme('titleColor', value)} />
+            <RangeControl label="Размер" value={config.titleSize} min={18} max={30} onChange={(value) => update('titleSize', value)} suffix="px" />
+          </div>
+          <div className="lsr-cards-row">
+            <ColorField label="Текст" value={theme.metaColor} onChange={(value) => updateTheme('metaColor', value)} />
+            <RangeControl label="Размер" value={config.bodySize} min={11} max={15} onChange={(value) => update('bodySize', value)} suffix="px" />
+          </div>
+        </SettingGroup>
 
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(280px, max-content))' },
-            gap: 2,
-            alignItems: 'stretch',
-          }}
-        >
-          <SettingGroup title="Текст">
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '124px 92px' }, gap: 0.65, alignItems: 'center' }}>
-            <FormControl size="small">
-              <InputLabel>Шрифт</InputLabel>
-              <Select label="Шрифт" value={config.fontFamily} onChange={(event) => update('fontFamily', event.target.value)}>
-                {FONT_OPTIONS.map((font) => (
-                  <MenuItem key={font.value} value={font.value}>{font.label}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small">
-              <InputLabel>Толщина</InputLabel>
-              <Select
-                label="Толщина"
-                value={String(config.titleWeight)}
-                onChange={(event) => update('titleWeight', Number(event.target.value) as EventCardStudioConfig['titleWeight'])}
-              >
-                {[700, 800, 900].map((weight) => (
-                  <MenuItem key={weight} value={String(weight)}>{weight}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
-          <SettingRow
-            left={<SettingLabel>Горизонталь</SettingLabel>}
-            right={
-              <MiniToggleGroup
-                value={config.textAlign}
-                onChange={(value) => update('textAlign', value as EventCardStudioConfig['textAlign'])}
-                options={[
-                  { value: 'left', label: 'Лево' },
-                  { value: 'center', label: 'Центр' },
-                  { value: 'right', label: 'Право' },
-                ]}
-              />
-            }
-          />
-          <SettingRow
-            left={<SettingLabel>Вертикаль</SettingLabel>}
-            right={
-              <MiniToggleGroup
-                value={config.verticalAlign}
-                onChange={(value) => update('verticalAlign', value as EventCardStudioConfig['verticalAlign'])}
-                options={[
-                  { value: 'top', label: 'Верх' },
-                  { value: 'center', label: 'Центр' },
-                  { value: 'bottom', label: 'Низ' },
-                ]}
-              />
-            }
-          />
+        <SettingGroup title="Карточка">
+          <div className="lsr-cards-row">
+            <ColorField label="Фон" value={theme.surface} onChange={(value) => updateTheme('surface', value)} />
+            <SelectField
+              label="Плашка даты"
+              value={theme.dateTone}
+              options={[{ value: 'white', label: 'Белая' }, { value: 'light', label: 'Светло-серая' }, { value: 'gray', label: 'Серая' }, { value: 'dark', label: 'Тёмная' }, { value: 'black', label: 'Чёрная' }]}
+              onChange={(event) => updateTheme('dateTone', event.target.value as ThemeCardSettings['dateTone'])}
+            />
+          </div>
+          <div className="lsr-cards-row">
+            <ColorField label="Акцент" value={theme.accentColor} onChange={(value) => updateTheme('accentColor', value)} />
+            <RangeControl label="Полоса" value={theme.railOpacity} min={0} max={1} step={0.05} onChange={(value) => updateTheme('railOpacity', value)} />
+          </div>
+          <div className="lsr-cards-row">
+            <ColorField label="Рамка" value={theme.outlineColor} onChange={(value) => updateTheme('outlineColor', value)} />
+            <RangeControl label="Видимость" value={theme.outlineOpacity} min={0} max={1} step={0.05} onChange={(value) => updateTheme('outlineOpacity', value)} />
+          </div>
+        </SettingGroup>
 
-          <SettingRow
-            left={<ColorField label="Название" value={theme.titleColor} onChange={(value) => updateTheme('titleColor', value)} />}
-            right={<MiniSliderRow label="Размер" value={config.titleSize} min={18} max={30} onChange={(value) => update('titleSize', value)} suffix="px" />}
-          />
-          <SettingRow
-            left={<ColorField label="Текст" value={theme.metaColor} onChange={(value) => updateTheme('metaColor', value)} />}
-            right={<MiniSliderRow label="Размер" value={config.bodySize} min={11} max={15} onChange={(value) => update('bodySize', value)} suffix="px" />}
-          />
-          </SettingGroup>
-
-          <SettingGroup title="Карточка">
-          <SettingRow left={<ColorField label="Фон" value={theme.surface} onChange={(value) => updateTheme('surface', value)} />} />
-          <SettingRow
-            left={<ColorField label="Акцент" value={theme.accentColor} onChange={(value) => updateTheme('accentColor', value)} />}
-            right={<MiniSliderRow label="Полоса" value={theme.railOpacity} min={0} max={1} step={0.05} onChange={(value) => updateTheme('railOpacity', value)} />}
-          />
-          <SettingRow
-            left={<ColorField label="Рамка" value={theme.outlineColor} onChange={(value) => updateTheme('outlineColor', value)} />}
-            right={<MiniSliderRow label="Рамка" value={theme.outlineOpacity} min={0} max={1} step={0.05} onChange={(value) => updateTheme('outlineOpacity', value)} />}
-          />
-          <SettingRow
-            left={
-              <FormControl size="small" sx={{ width: 136 }}>
-                <InputLabel>Дата</InputLabel>
-                <Select label="Дата" value={theme.dateTone} onChange={(event) => updateTheme('dateTone', event.target.value as ThemeCardSettings['dateTone'])}>
-                  <MenuItem value="white">Белая</MenuItem>
-                  <MenuItem value="light">Светло-серая</MenuItem>
-                  <MenuItem value="gray">Серая</MenuItem>
-                  <MenuItem value="dark">Темная</MenuItem>
-                  <MenuItem value="black">Черная</MenuItem>
-                </Select>
-              </FormControl>
-            }
-          />
-          </SettingGroup>
-
-          <SettingGroup title="Фото">
-          <SettingRow
-            left={<ColorField label="Слой" value={theme.imageOverlayColor} onChange={(value) => updateTheme('imageOverlayColor', value)} />}
-            right={<MiniSliderRow label="Слой" value={theme.imageOverlayOpacity} min={0} max={0.85} step={0.05} onChange={(value) => updateTheme('imageOverlayOpacity', value)} />}
-          />
-          <SettingRow
-            left={<SettingLabel>Фильтр</SettingLabel>}
-            right={<MiniSliderRow label="Сила" value={theme.overlay} min={0.15} max={0.9} step={0.05} onChange={(value) => updateTheme('overlay', value)} />}
-          />
-          <SettingRow
-            left={<SettingLabel>Размытие</SettingLabel>}
-            right={<MiniSliderRow label="Blur" value={config.imageBlur} min={0} max={3} step={0.25} onChange={(value) => update('imageBlur', value)} suffix="px" />}
-          />
-          <SettingRow
-            left={<SettingLabel>Контраст</SettingLabel>}
-            right={<MiniSliderRow label="Контраст" value={config.imageContrast} min={0.9} max={1.25} step={0.01} onChange={(value) => update('imageContrast', value)} />}
-          />
-          </SettingGroup>
-        </Box>
-      </Stack>
-    </Paper>
-  );
-}
-
-function SectionCheckbox({ label, checked, onChange, disabled = false }: { label: string; checked: boolean; onChange: () => void; disabled?: boolean }) {
-  return (
-    <FormControlLabel
-      sx={{ m: 0, mr: 0.25, '& .MuiFormControlLabel-label': { fontSize: 12 } }}
-      control={<Checkbox checked={checked} onChange={onChange} disabled={disabled} size="small" sx={{ p: 0.45 }} />}
-      label={label}
-    />
-  );
-}
-
-function SectionTitle({ children }: { children: string }) {
-  return (
-    <Typography variant="caption" color="text.primary" sx={{ fontSize: 14, fontWeight: 700, lineHeight: 1.2, textTransform: 'none' }}>
-      {children}
-    </Typography>
+        <SettingGroup title="Фото">
+          <div className="lsr-cards-row">
+            <ColorField label="Слой" value={theme.imageOverlayColor} onChange={(value) => updateTheme('imageOverlayColor', value)} />
+            <RangeControl label="Плотность" value={theme.imageOverlayOpacity} min={0} max={0.85} step={0.05} onChange={(value) => updateTheme('imageOverlayOpacity', value)} />
+          </div>
+          <RangeControl label="Затемнение фото" value={theme.overlay} min={0.15} max={0.9} step={0.05} onChange={(value) => updateTheme('overlay', value)} />
+          <RangeControl label="Размытие" value={config.imageBlur} min={0} max={3} step={0.25} onChange={(value) => update('imageBlur', value)} suffix="px" />
+          <RangeControl label="Контраст" value={config.imageContrast} min={0.9} max={1.25} step={0.01} onChange={(value) => update('imageContrast', value)} />
+        </SettingGroup>
+      </div>
+    </section>
   );
 }
 
 function SettingGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <Stack
-      spacing={0.85}
-      sx={{
-        minWidth: 280,
-        height: '100%',
-        pr: 2,
-        borderRight: { xs: 0, md: '1px solid' },
-        borderColor: 'divider',
-        '&:last-child': {
-          borderRight: 0,
-          pr: 0,
-        },
-      }}
-    >
-      <Box sx={{ mb: 0.35 }}>
-        <SectionTitle>{title}</SectionTitle>
-      </Box>
+    <div className="lsr-cards-group">
+      <div className="lsr-cards-caption">{title}</div>
       {children}
-    </Stack>
+    </div>
   );
 }
 
-function SettingRow({ left, right }: { left: ReactNode; right?: ReactNode }) {
-  return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '136px 132px' }, gap: 0.75, alignItems: 'center' }}>
-      {left}
-      {right ?? <Box />}
-    </Box>
-  );
+function SettingLine({ label, children }: { label: string; children: ReactNode }) {
+  return <div className="lsr-cards-line"><span>{label}</span>{children}</div>;
 }
 
-function SettingLabel({ children }: { children: string }) {
-  return (
-    <Typography variant="caption" color="text.secondary" sx={{ width: 136, fontSize: 13, fontWeight: 900, lineHeight: 1 }}>
-      {children}
-    </Typography>
-  );
-}
-
-function MiniToggleGroup({
+function Segment({
   value,
   options,
   onChange,
+  label,
 }: {
   value: string;
   options: Array<{ value: string; label: string }>;
   onChange: (value: string) => void;
+  label: string;
 }) {
   return (
-    <ToggleButtonGroup
-      size="small"
-      exclusive
-      value={value}
-      onChange={(_, next: string | null) => next && onChange(next)}
-      sx={{ width: 132, '& .MuiToggleButton-root': { flex: 1, py: 0.35, px: 0.35, fontSize: 10.5 } }}
-    >
+    <div className="lsr-cards-segment" role="group" aria-label={label}>
       {options.map((option) => (
-        <ToggleButton key={option.value} value={option.value}>
+        <button key={option.value} type="button" aria-pressed={option.value === value} className={option.value === value ? 'is-active' : ''} onClick={() => onChange(option.value)}>
           {option.label}
-        </ToggleButton>
+        </button>
       ))}
-    </ToggleButtonGroup>
+    </div>
   );
 }
 
-function MiniSliderRow({
+function RangeControl({
   label,
   value,
   min,
@@ -584,26 +425,12 @@ function MiniSliderRow({
   suffix?: string;
   onChange: (value: number) => void;
 }) {
+  const id = useId();
   return (
-    <Box sx={{ width: 132, minWidth: 0 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
-        <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11, fontWeight: 800, lineHeight: 1 }}>
-          {label}
-        </Typography>
-        <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11, lineHeight: 1 }}>
-          {value}{suffix}
-        </Typography>
-      </Stack>
-      <Slider
-        size="small"
-        value={value}
-        min={min}
-        max={max}
-        step={step}
-        onChange={(_, next) => onChange(Array.isArray(next) ? next[0] : next)}
-        sx={{ py: 0.25, '& .MuiSlider-thumb': { width: 12, height: 12 } }}
-      />
-    </Box>
+    <div className="lsr-cards-range">
+      <label htmlFor={id}><span>{label}</span><span className="lsr-cards-range-value">{value}{suffix}</span></label>
+      <input id={id} type="range" value={value} min={min} max={max} step={step} onChange={(event) => onChange(Number(event.target.value))} />
+    </div>
   );
 }
 
@@ -641,23 +468,13 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
   };
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: 136, minWidth: 136, gap: 1 }}>
-      <Typography variant="caption" color="text.secondary" sx={{ fontSize: 13, fontWeight: 900, lineHeight: 1 }}>
-        {label}
-      </Typography>
-      <TextField
-        type="color"
-        value={draft}
-        onChange={(event) => queueCommit(event.target.value)}
-        onBlur={flushCommit}
-        inputProps={{ 'aria-label': label }}
-        sx={{
-          width: 56,
-          '& .MuiInputBase-root': { height: 26 },
-          '& input[type="color"]': { height: 20, p: '2px 4px' },
-        }}
-      />
-    </Box>
+    <label className="lsr-cards-color">
+      <span>{label}</span>
+      <span className="lsr-cards-color-box">
+        <input type="color" value={draft} aria-label={label} onChange={(event) => queueCommit(event.target.value)} onBlur={flushCommit} />
+        <code>{draft}</code>
+      </span>
+    </label>
   );
 }
 

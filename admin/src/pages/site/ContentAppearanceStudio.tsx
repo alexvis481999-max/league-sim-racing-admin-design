@@ -1,23 +1,6 @@
-import {
-  Box,
-  Checkbox,
-  FormControl,
-  FormControlLabel,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Select,
-  Slider,
-  Stack,
-  Tab,
-  Tabs,
-  TextField,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
-} from '@mui/material';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import type { PublicationAction, PublicationPlacementCode } from '../../shared/types';
+import { Checkbox, Field, Fields, SelectField, SubTabs } from '../../ui/v16';
 import type {
   ContentAppearanceConfig,
   ContentPreviewTheme,
@@ -26,6 +9,7 @@ import type {
   ContentThemeSettings,
 } from './contentAppearance';
 import { cloneContentAppearance } from './contentAppearance';
+import './site.v16.css';
 
 const surfaceLabels: Record<ContentSurfaceKind, string> = {
   card: 'Карточка новости',
@@ -50,15 +34,14 @@ type PreviewContentProps = {
   actions: PublicationAction[];
 };
 
-type StudioProps = PreviewContentProps & {
+type StudioProps = {
   value: ContentAppearanceConfig;
   onChange: (value: ContentAppearanceConfig) => void;
   surfaces: ContentSurfaceKind[];
 };
 
-export function ContentAppearanceStudio({
-  value, onChange, placementCode, image, title, summary, eyebrow, actions, surfaces,
-}: StudioProps) {
+/** Appearance controls of one placement (presentation of a revision placement). The live preview is rendered by the page. */
+export function ContentAppearanceStudio({ value, onChange, surfaces }: StudioProps) {
   const [surface, setSurface] = useState<ContentSurfaceKind>(surfaces[0] ?? 'card');
   const [draftValue, setDraftValue] = useState<ContentAppearanceConfig>(() => cloneContentAppearance(value));
   const draftRef = useRef(draftValue);
@@ -93,7 +76,8 @@ export function ContentAppearanceStudio({
   }
 
   function commitDraft() {
-    if (commitTimerRef.current !== null) window.clearTimeout(commitTimerRef.current);
+    if (commitTimerRef.current === null) return;
+    window.clearTimeout(commitTimerRef.current);
     commitTimerRef.current = null;
     onChange(draftRef.current);
   }
@@ -105,162 +89,75 @@ export function ContentAppearanceStudio({
   function updateTheme(patch: Partial<ContentThemeSettings>, commit = true) {
     setAppearance({
       ...draftValue,
-      [activeSurface]: {
-        ...settings,
-        themes: { ...settings.themes, [draftValue.previewTheme]: { ...theme, ...patch } },
-      },
+      [activeSurface]: { ...settings, themes: { ...settings.themes, [draftValue.previewTheme]: { ...theme, ...patch } } },
     }, commit);
   }
 
   return (
-    <Box sx={{ mt: 1, borderTop: '1px solid', borderColor: 'divider', pt: 2 }}>
-      <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" gap={1.5} mb={1.5}>
-        <Box>
-          <Typography variant="h6" sx={{ fontWeight: 850 }}>Предпросмотр и оформление</Typography>
-          <Typography variant="body2" color="text.secondary">
-            Превью повторяет пропорции и композицию выбранного блока сайта.
-          </Typography>
-        </Box>
-        <ToggleButtonGroup
-          exclusive
-          size="small"
-          value={draftValue.previewTheme}
-          onChange={(_, next: ContentPreviewTheme | null) => next && setAppearance({ ...draftValue, previewTheme: next })}
-        >
-          <ToggleButton value="dark">Тёмная тема</ToggleButton>
-          <ToggleButton value="light">Светлая тема</ToggleButton>
-        </ToggleButtonGroup>
-      </Stack>
-
-      {surfaces.length > 1 ? (
-        <Tabs
-          value={activeSurface}
-          onChange={(_, next: ContentSurfaceKind) => setSurface(next)}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{ mb: 2 }}
-        >
-          {surfaces.map((item) => <Tab key={item} value={item} label={surfaceLabels[item]} />)}
-        </Tabs>
-      ) : null}
-
-      <ContentAppearancePreview
-        placementCode={placementCode}
-        appearance={draftValue}
-        image={image}
-        title={title}
-        summary={summary}
-        eyebrow={eyebrow}
-        actions={actions}
-      />
-
-      <Paper
-        variant="outlined"
-        sx={{
-          mt: 1.25,
-          p: 1,
-          borderRadius: 1,
-          '& .MuiInputBase-root': { minHeight: 36 },
-          '& .MuiSelect-select': { py: '7px' },
-          '& .MuiInputLabel-root': { fontSize: 14 },
-          '& .MuiToggleButton-root': { minHeight: 32, py: 0.35, px: 0.8, fontSize: 11 },
-          '& .MuiFormControlLabel-root': { mr: 0.75, my: -0.25 },
-          '& .MuiFormControlLabel-label': { fontSize: 12 },
-        }}
-      >
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: 'repeat(3,minmax(0,1fr))' }, gap: 1.5, alignItems: 'start' }}>
-        <Stack spacing={0.7}>
-          <Box>
-            <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>Композиция</Typography>
-          </Box>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 0.65 }}>
-            <FormControl size="small">
-              <InputLabel>Макет текста</InputLabel>
-              <Select label="Макет текста" value={settings.layout} onChange={(event) => updateSurface({ layout: event.target.value as ContentSurfaceSettings['layout'] })}>
-                <MenuItem value="overlay">Поверх фотографии</MenuItem>
-                <MenuItem value="panel">На контрастной подложке</MenuItem>
-                <MenuItem value="minimal">Без фотографии</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl size="small">
-              <InputLabel>Кадрирование фотографии</InputLabel>
-              <Select label="Кадрирование фотографии" value={settings.imagePosition} onChange={(event) => updateSurface({ imagePosition: event.target.value as ContentSurfaceSettings['imagePosition'] })}>
-                <MenuItem value="top">По верхнему краю</MenuItem>
-                <MenuItem value="center">По центру</MenuItem>
-                <MenuItem value="bottom">По нижнему краю</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-          <ToggleButtonGroup exclusive size="small" value={settings.textAlign} onChange={(_, next) => next && updateSurface({ textAlign: next })} fullWidth>
-            <ToggleButton value="left">Текст слева</ToggleButton>
-            <ToggleButton value="center">По центру</ToggleButton>
-            <ToggleButton value="right">Текст справа</ToggleButton>
-          </ToggleButtonGroup>
-          <ToggleButtonGroup exclusive size="small" value={settings.verticalAlign} onChange={(_, next) => next && updateSurface({ verticalAlign: next })} fullWidth>
-            <ToggleButton value="top">Сверху</ToggleButton>
-            <ToggleButton value="center">По центру</ToggleButton>
-            <ToggleButton value="bottom">Снизу</ToggleButton>
-          </ToggleButtonGroup>
-        </Stack>
-
-        <Stack spacing={0.45} sx={{ borderLeft: { xl: '1px solid' }, borderColor: { xl: 'divider' }, pl: { xl: 1.5 } }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>Содержимое</Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', columnGap: 1 }}>
-            <Check label="Фото" value={settings.showImage} onChange={(showImage) => updateSurface({ showImage })} />
-            <Check label="Рубрика" value={settings.showEyebrow} onChange={(showEyebrow) => updateSurface({ showEyebrow })} />
-            <Check label="Описание" value={settings.showSummary} onChange={(showSummary) => updateSurface({ showSummary })} />
-            <Check label="Дата" value={settings.showDate} onChange={(showDate) => updateSurface({ showDate })} />
-          </Box>
-          <NumberSlider label="Размер заголовка" value={settings.titleSize} min={16} max={activeSurface === 'card' ? 38 : 76} suffix="px" onChange={(titleSize) => updateSurface({ titleSize }, false)} onCommit={commitDraft} />
-        </Stack>
-
-        <Stack spacing={0.7} sx={{ borderLeft: { xl: '1px solid' }, borderColor: { xl: 'divider' }, pl: { xl: 1.5 } }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
-            Цвета · {draftValue.previewTheme === 'dark' ? 'тёмная тема' : 'светлая тема'}
-          </Typography>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 0.65 }}>
-            <ColorInput label="Фон" value={theme.surface} onChange={(surface) => updateTheme({ surface }, false)} onCommit={commitDraft} />
-            <ColorInput label="Акцент" value={theme.accentColor} onChange={(accentColor) => updateTheme({ accentColor }, false)} onCommit={commitDraft} />
-            <ColorInput label="Заголовок" value={theme.titleColor} onChange={(titleColor) => updateTheme({ titleColor }, false)} onCommit={commitDraft} />
-            <ColorInput label="Текст" value={theme.textColor} onChange={(textColor) => updateTheme({ textColor }, false)} onCommit={commitDraft} />
-            <ColorInput label="Рамка" value={theme.borderColor} onChange={(borderColor) => updateTheme({ borderColor }, false)} onCommit={commitDraft} />
-            <ColorInput label="Затемнение" value={theme.overlayColor} onChange={(overlayColor) => updateTheme({ overlayColor }, false)} onCommit={commitDraft} />
-          </Box>
-          <NumberSlider label="Плотность затемнения" value={theme.overlayOpacity} min={0} max={0.95} step={0.05} onChange={(overlayOpacity) => updateTheme({ overlayOpacity }, false)} onCommit={commitDraft} />
-        </Stack>
-      </Box>
-      </Paper>
-    </Box>
+    <div className="lsr-site-studio">
+      {surfaces.length > 1 && <SubTabs label="Поверхность" value={activeSurface} onChange={setSurface} items={surfaces.map((key) => ({ key, label: surfaceLabels[key] }))} />}
+      <div className="lsr-site-studio-group">
+        <h4>Композиция</h4>
+        <Fields>
+          <SelectField label="Компоновка" value={settings.layout} onChange={(e) => updateSurface({ layout: e.target.value as ContentSurfaceSettings['layout'] })}
+            options={[{ value: 'overlay', label: 'Текст поверх изображения' }, { value: 'panel', label: 'На контрастной подложке' }, { value: 'minimal', label: 'Минималистичная, без фото' }]} />
+          <SelectField label="Кадрирование фотографии" value={settings.imagePosition} onChange={(e) => updateSurface({ imagePosition: e.target.value as ContentSurfaceSettings['imagePosition'] })}
+            options={[{ value: 'top', label: 'По верхнему краю' }, { value: 'center', label: 'По центру' }, { value: 'bottom', label: 'По нижнему краю' }]} />
+          <SelectField label="Выравнивание текста" value={settings.textAlign} onChange={(e) => updateSurface({ textAlign: e.target.value as ContentSurfaceSettings['textAlign'] })}
+            options={[{ value: 'left', label: 'Слева' }, { value: 'center', label: 'По центру' }, { value: 'right', label: 'Справа' }]} />
+          <SelectField label="Положение текста" value={settings.verticalAlign} onChange={(e) => updateSurface({ verticalAlign: e.target.value as ContentSurfaceSettings['verticalAlign'] })}
+            options={[{ value: 'top', label: 'Сверху' }, { value: 'center', label: 'По центру' }, { value: 'bottom', label: 'Снизу' }]} />
+          <RangeField label="Размер заголовка" value={settings.titleSize} min={16} max={activeSurface === 'card' ? 38 : 76} suffix="px" onChange={(titleSize) => updateSurface({ titleSize }, false)} onCommit={commitDraft} />
+        </Fields>
+        <div className="lsr-site-checks">
+          <Checkbox label="Показывать фото" checked={settings.showImage} onChange={(showImage) => updateSurface({ showImage })} />
+          <Checkbox label="Показывать рубрику" checked={settings.showEyebrow} onChange={(showEyebrow) => updateSurface({ showEyebrow })} />
+          <Checkbox label="Показывать описание" checked={settings.showSummary} onChange={(showSummary) => updateSurface({ showSummary })} />
+          <Checkbox label="Показывать дату" checked={settings.showDate} onChange={(showDate) => updateSurface({ showDate })} />
+        </div>
+      </div>
+      <div className="lsr-site-studio-group">
+        <div className="lsr-between">
+          <h4>Цвета · {draftValue.previewTheme === 'dark' ? 'тёмная тема сайта' : 'светлая тема сайта'}</h4>
+          <div className="lsr-site-segment" role="group" aria-label="Тема сайта">
+            {(['dark', 'light'] as ContentPreviewTheme[]).map((key) => (
+              <button key={key} type="button" aria-pressed={draftValue.previewTheme === key} className={draftValue.previewTheme === key ? 'is-active' : ''} onClick={() => setAppearance({ ...draftValue, previewTheme: key })}>
+                {key === 'dark' ? 'Тёмная' : 'Светлая'}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="lsr-site-colors">
+          <ColorInput label="Фон" value={theme.surface} onChange={(surface) => updateTheme({ surface }, false)} onCommit={commitDraft} />
+          <ColorInput label="Акцент" value={theme.accentColor} onChange={(accentColor) => updateTheme({ accentColor }, false)} onCommit={commitDraft} />
+          <ColorInput label="Заголовок" value={theme.titleColor} onChange={(titleColor) => updateTheme({ titleColor }, false)} onCommit={commitDraft} />
+          <ColorInput label="Текст" value={theme.textColor} onChange={(textColor) => updateTheme({ textColor }, false)} onCommit={commitDraft} />
+          <ColorInput label="Рамка" value={theme.borderColor} onChange={(borderColor) => updateTheme({ borderColor }, false)} onCommit={commitDraft} />
+          <ColorInput label="Затемнение" value={theme.overlayColor} onChange={(overlayColor) => updateTheme({ overlayColor }, false)} onCommit={commitDraft} />
+        </div>
+        <Fields>
+          <RangeField label="Плотность затемнения" value={theme.overlayOpacity} min={0} max={0.95} step={0.05} onChange={(overlayOpacity) => updateTheme({ overlayOpacity }, false)} onCommit={commitDraft} />
+        </Fields>
+      </div>
+    </div>
   );
 }
 
 type StandalonePreviewProps = PreviewContentProps & {
   appearance: ContentAppearanceConfig;
+  label?: ReactNode;
+  aside?: ReactNode;
 };
 
-export function ContentAppearancePreview({
-  placementCode, appearance, image, title, summary, eyebrow, actions,
-}: StandalonePreviewProps) {
-  const meta = placementPreviewMeta[placementCode];
-
+/** Scaled render of the public site block (publication-preview.html on VITE_SITE_URL). */
+export function ContentAppearancePreview({ label, aside, ...props }: StandalonePreviewProps) {
+  const meta = placementPreviewMeta[props.placementCode];
   return (
-    <Box>
-      <Stack direction="row" justifyContent="space-between" alignItems="baseline" gap={1} mb={1}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>{meta.label}</Typography>
-        <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
-          Viewport сайта: {meta.width} × {meta.height}
-        </Typography>
-      </Stack>
-      <PublicationPreviewFrame
-        placementCode={placementCode}
-        appearance={appearance}
-        image={image}
-        title={title}
-        summary={summary}
-        eyebrow={eyebrow}
-        actions={actions}
-      />
-    </Box>
+    <div className="lsr-site-display">
+      <div className="lsr-site-display-title"><span>{label ?? meta.label}</span>{aside}</div>
+      <PublicationPreviewFrame {...props} />
+      <div className="lsr-site-display-meta">Окно сайта {meta.width} × {meta.height}</div>
+    </div>
   );
 }
 
@@ -296,7 +193,7 @@ function PublicationPreviewFrame({ placementCode, appearance, image, title, summ
 
   useEffect(() => {
     const viewport = viewportRef.current;
-    if (!viewport) return;
+    if (!viewport || typeof ResizeObserver === 'undefined') return;
     const updateWidth = () => setAvailableWidth(viewport.clientWidth || meta.width);
     const observer = new ResizeObserver(updateWidth);
     observer.observe(viewport);
@@ -305,63 +202,36 @@ function PublicationPreviewFrame({ placementCode, appearance, image, title, summ
   }, [meta.width]);
 
   const scale = Math.min(1, availableWidth / meta.width);
-  return <Box ref={viewportRef} sx={{ width: '100%', overflow: 'hidden', borderRadius: 1.5, bgcolor: appearance.previewTheme === 'light' ? '#e7e3da' : '#070a0f', border: '1px solid', borderColor: 'divider' }}>
-    <Box sx={{ width: meta.width * scale, height: contentHeight * scale, mx: 'auto', overflow: 'hidden' }}>
-      <Box sx={{ width: meta.width, height: contentHeight, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
-        <Box
-          component="iframe"
-          ref={frameRef}
-          src={frameUrl}
-          title={`Предпросмотр: ${meta.label}`}
-          onLoad={sendPreview}
-          sx={{ display: 'block', width: meta.width, height: contentHeight, border: 0, bgcolor: 'transparent' }}
-        />
-      </Box>
-    </Box>
-  </Box>;
-}
-
-function Check({ label, value, onChange }: { label: string; value: boolean; onChange: (value: boolean) => void }) {
-  return <FormControlLabel control={<Checkbox size="small" checked={value} onChange={(_, checked) => onChange(checked)} />} label={label} />;
-}
-
-function ColorInput({ label, value, onChange, onCommit }: { label: string; value: string; onChange: (value: string) => void; onCommit: () => void }) {
   return (
-    <TextField
-      size="small"
-      label={label}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      onBlur={onCommit}
-      InputProps={{
-        startAdornment: (
-          <Box component="input" type="color" value={validColor(value)} onChange={(event) => onChange(event.target.value)} sx={{ width: 22, height: 22, p: 0, mr: 0.75, border: 0, bgcolor: 'transparent' }} />
-        ),
-      }}
-    />
+    <div ref={viewportRef} className={`lsr-site-frame${appearance.previewTheme === 'light' ? ' is-light' : ''}`}>
+      <div style={{ width: meta.width * scale, height: contentHeight * scale, margin: '0 auto', overflow: 'hidden' }}>
+        <div style={{ width: meta.width, height: contentHeight, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+          <iframe ref={frameRef} src={frameUrl} title={`Предпросмотр: ${meta.label}`} onLoad={sendPreview} style={{ display: 'block', width: meta.width, height: contentHeight, border: 0, background: 'transparent' }} />
+        </div>
+      </div>
+    </div>
   );
 }
 
-type NumberSliderProps = {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step?: number;
-  suffix?: string;
-  onChange: (value: number) => void;
-  onCommit: () => void;
-};
-
-function NumberSlider({ label, value, min, max, step = 1, suffix = '', onChange, onCommit }: NumberSliderProps) {
+function ColorInput({ label, value, onChange, onCommit }: { label: string; value: string; onChange: (value: string) => void; onCommit: () => void }) {
+  const id = useId();
   return (
-    <Box>
-      <Stack direction="row" justifyContent="space-between">
-        <Typography variant="caption" color="text.secondary">{label}</Typography>
-        <Typography variant="caption">{value}{suffix}</Typography>
-      </Stack>
-      <Slider size="small" value={value} min={min} max={max} step={step} onChange={(_, next) => onChange(Number(next))} onChangeCommitted={onCommit} sx={{ py: 0.5 }} />
-    </Box>
+    <Field label={label} htmlFor={id}>
+      <div className="lsr-site-color">
+        <input type="color" aria-label={`${label}: палитра`} value={validColor(value)} onChange={(event) => onChange(event.target.value)} onBlur={onCommit} />
+        <input id={id} value={value} spellCheck={false} onChange={(event) => onChange(event.target.value)} onBlur={onCommit} />
+      </div>
+    </Field>
+  );
+}
+
+type RangeFieldProps = { label: string; value: number; min: number; max: number; step?: number; suffix?: string; onChange: (value: number) => void; onCommit: () => void };
+function RangeField({ label, value, min, max, step = 1, suffix = '', onChange, onCommit }: RangeFieldProps) {
+  const id = useId();
+  return (
+    <Field label={<span className="lsr-between"><span>{label}</span><span className="lsr-site-range-value">{value}{suffix}</span></span>} htmlFor={id}>
+      <input id={id} className="lsr-site-range" type="range" value={value} min={min} max={max} step={step} onChange={(event) => onChange(Number(event.target.value))} onPointerUp={onCommit} onKeyUp={onCommit} onBlur={onCommit} />
+    </Field>
   );
 }
 
