@@ -99,7 +99,7 @@ export function ResultRevisions({ eventId, resultId, active }: { eventId: string
   const [chosen, setChosen] = useState<string | null>(null);
   const revision = chosen ?? revisions.data?.items[0]?.id ?? null;
   return (
-    <AsyncView resource={revisions} isEmpty={(d) => !d.items.length} empty={<Notice tone="neutral">Опубликованных ревизий результата пока нет.</Notice>}>
+    <AsyncView resource={revisions} isEmpty={(d) => !d.items.length} empty={<Notice tone="neutral">Опубликованных ревизий пока нет.</Notice>}>
       {(data) => (
         <div className="lsr-stack">
           {data.items.length > 1 && (

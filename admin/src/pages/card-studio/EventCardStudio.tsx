@@ -48,7 +48,7 @@ const ALL_TEMPLATES: CardTemplate[] = [
   { id: 'tournament', label: 'Турнир', mode: 'tournament', size: 6 },
 ];
 
-const FONT_OPTIONS = [
+export const FONT_OPTIONS = [
   { value: 'Inter, sans-serif', label: 'Inter' },
   { value: 'Arial, sans-serif', label: 'Arial' },
   { value: '"Trebuchet MS", sans-serif', label: 'Trebuchet' },
@@ -238,7 +238,7 @@ export function EventCardStudioPanel({
   );
 }
 
-function PublicEventCardPreview({
+export function PublicEventCardPreview({
   variant,
   source,
   config,

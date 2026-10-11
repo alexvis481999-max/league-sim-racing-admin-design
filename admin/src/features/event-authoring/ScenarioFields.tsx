@@ -10,7 +10,7 @@ import {
   AccordionSummary,
   AccordionDetails,
 } from '@mui/material';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import type { Descriptor, Settings } from './types';
 import { Field, FieldGroup, type FieldsProps } from './Fields';
 import { EditingRestrictions, read, write } from './form-state';
@@ -56,28 +56,33 @@ export function RaceProgramFields({ descriptor, prefix = 'race', ...props }: Pro
           type="number"
         />
       ))}
-      <Stack direction="row" gap={1}>
-        {['По времени', 'По кругам'].map((label, i) => (
-          <Button
-            key={label}
-            disabled={props.disabled}
-            variant={(r.laps !== null) === !!i ? 'contained' : 'outlined'}
-            onClick={() =>
-              props.onChange(
-                write(
-                  props.value,
-                  prefix + '.race',
-                  i
-                    ? { laps: descriptor.constraints.laps.minimum!, durationMinutes: null }
-                    : structuredClone(descriptor.raceDefaults!.race),
-                ),
-              )
-            }
-          >
-            {label}
-          </Button>
-        ))}
-      </Stack>
+      <div className="lsr-field">
+        <span className="lsr-field-label">Длительность основной гонки</span>
+        <div className="lsr-filterbar" role="group" aria-label="Длительность основной гонки">
+          {['По времени', 'По кругам'].map((label, i) => (
+            <button
+              type="button"
+              key={label}
+              disabled={props.disabled}
+              aria-pressed={(r.laps !== null) === !!i}
+              className={`lsr-pillbtn is-lg${(r.laps !== null) === !!i ? ' is-active' : ''}`}
+              onClick={() =>
+                props.onChange(
+                  write(
+                    props.value,
+                    prefix + '.race',
+                    i
+                      ? { laps: descriptor.constraints.laps.minimum!, durationMinutes: null }
+                      : structuredClone(descriptor.raceDefaults!.race),
+                  ),
+                )
+              }
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
       <Field
         {...props}
         prefix={prefix}
@@ -102,9 +107,7 @@ export function RaceProgramFields({ descriptor, prefix = 'race', ...props }: Pro
         type="number"
       />
       <Field {...props} prefix={prefix} path="maxSessions" label="Сплитов" type="number" />
-      <Typography color="text.secondary">
-        Всего мест: {Number(race.maxPlayersPerSession) * Number(race.maxSessions) || '—'}
-      </Typography>
+      <div className="lsr-field"><span className="lsr-field-label">Всего мест</span><div className="lsr-infopill" style={{ alignSelf: 'flex-start' }}>{Number(race.maxPlayersPerSession) * Number(race.maxSessions) || '—'}</div></div>
       {race.format === 'REVERSE_GRID_DOUBLE_RACE' && (
         <Field
           {...props}
@@ -127,25 +130,20 @@ export function RegistrationPeriodFields(props: Props) {
           label="Длительность регистрации, мин"
           type="number"
         />
-        <Stack direction="row" gap={0.5} flexWrap="wrap">
+        <div className="lsr-filterbar" role="group" aria-label="Быстрый выбор длительности">
           {[30, 60, 120, 360, 720, 1440, 4320].map((n) => (
-            <Button
-              size="small"
+            <button
+              type="button"
               key={n}
               disabled={props.disabled}
-              variant={
-                read(props.value, 'registrationRules.durationMinutes') === n
-                  ? 'contained'
-                  : 'outlined'
-              }
-              onClick={() =>
-                props.onChange(write(props.value, 'registrationRules.durationMinutes', n))
-              }
+              aria-pressed={read(props.value, 'registrationRules.durationMinutes') === n}
+              className={`lsr-pillbtn${read(props.value, 'registrationRules.durationMinutes') === n ? ' is-active' : ''}`}
+              onClick={() => props.onChange(write(props.value, 'registrationRules.durationMinutes', n))}
             >
               {n < 60 ? n + ' мин' : n < 1440 ? n / 60 + ' ч' : n / 1440 + ' дн'}
-            </Button>
+            </button>
           ))}
-        </Stack>
+        </div>
       </Stack>
       <Field
         {...props}
@@ -294,264 +292,142 @@ function SeriesFields(props: Props) {
     path = weekly ? 'weekly.weeks' : 'stages',
     rows = read(props.value, path) as Settings[],
     locked = useContext(EditingRestrictions)?.structureLocked;
+  const [selected, setSelected] = useState(0);
+  const index = Math.min(selected, Math.max(0, rows.length - 1));
   const changeRows = (v: Settings[]) => props.onChange(write(props.value, path, v));
+  const unit = weekly ? 'Неделя' : 'Этап';
   return (
-    <Stack gap={2}>
+    <div className="lsr-stack">
       <RaceProgramFields {...props} prefix="common.race" />
-      {weekly && <WeeklyScheduleEditor {...props} />}
-      {!weekly && <Field {...props} path="firstDate" label="Начало чемпионата" type="date" />}
-      <Typography variant="body2" color="text.secondary">{weekly?'Каждая неделя длится семь дней от даты начала серии. Гонки заполняют эти недели.':'Первый этап начинается в день начала чемпионата и заканчивается в день своей гонки. Следующий этап начинается на следующий день.'}</Typography>
-      {rows.map((row, i) => {
-        const prefix = path + '.' + i,
-          common = read(props.value, 'common.game') as Settings,
-          game = {
-            ...common,
-            track: row.track,
-            environment: row.weather,
-            catalogChoices: {
-              ...(common.catalogChoices as Settings),
-              weatherCodes: row.weatherCodes,
-            },
-          };
-        return (
-          <Accordion key={String(row._editorId)} defaultExpanded={i === 0}>
-            <AccordionSummary>
-              <Typography fontWeight={700}>
-                {String(row.title || `${weekly ? 'Неделя' : 'Этап'} ${i + 1}`)}
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Stack gap={2}>
-                <FieldGroup title={weekly ? 'Неделя' : 'Этап'}>
-                  <Field {...props} prefix={prefix} path="title" label="Название" />
-                  {!weekly && (
-                    <Field
-                      {...props}
-                      prefix={prefix}
-                      path="startsAt"
-                      label="Старт гоночной сессии"
-                      type="datetime-local"
-                    />
+      {weekly ? <WeeklyScheduleEditor {...props} /> : (
+        <FieldGroup title="Календарь чемпионата" description="Первый этап начинается в день начала чемпионата и заканчивается в день своей гонки. Следующий этап начинается на следующий день.">
+          <Field {...props} path="firstDate" label="Начало чемпионата" type="date" />
+        </FieldGroup>
+      )}
+      <section className="lsr-formgroup">
+        <h3>{weekly ? 'Недели серии' : 'Этапы чемпионата'}</h3>
+        <p>{weekly ? 'Каждая неделя длится семь дней от даты начала серии; гонки заполняют эти недели. Выберите неделю слева, чтобы изменить её трассу, погоду и отличия от общей программы.' : 'Выберите этап слева, чтобы изменить его дату, трассу, погоду и отличия от общей программы.'}</p>
+        <div className="lsr-split" style={{ border: '1px solid var(--lsr-line)', borderRadius: 10, overflow: 'hidden', gap: 0 }}>
+          <div style={{ borderRight: '1px solid var(--lsr-line)', background: '#fbfcfe' }}>
+            <div className="lsr-between" style={{ padding: '12px 14px', borderBottom: '1px solid var(--lsr-line2)' }}>
+              <b style={{ fontSize: 12 }}>{rows.length} {weekly ? 'нед.' : 'эт.'}</b>
+              <button type="button" className="lsr-btn is-soft is-sm" disabled={props.disabled || locked}
+                onClick={() => { changeRows([...rows, { ...structuredClone((read(props.descriptor.defaults, path) as Settings[])[0]), _editorId: crypto.randomUUID(), title: unit + ' ' + (rows.length + 1), ...(!weekly ? { startsAt: new Date().toISOString() } : {}) }]); setSelected(rows.length); }}>
+                ＋ Добавить {weekly ? 'неделю' : 'этап'}
+              </button>
+            </div>
+            <div className="lsr-sidelist">
+              {rows.map((row, i) => (
+                <button key={String(row._editorId ?? i)} type="button" className={`lsr-sideitem${i === index ? ' is-active' : ''}`} aria-pressed={i === index} onClick={() => setSelected(i)}>
+                  <span style={{ minWidth: 0 }}><b>{i + 1}. {String(row.title || `${unit} ${i + 1}`)}</b><small>{String((row.track as Settings | undefined)?.code || 'трасса не выбрана')}{!weekly && row.startsAt ? ' · ' + new Date(String(row.startsAt)).toLocaleDateString('ru-RU') : ''}</small></span>
+                  <span className="lsr-chev">›</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div style={{ padding: 18, minWidth: 0 }}>
+            {rows[index] && <SeriesRowEditor {...props} index={index} onRemoved={() => setSelected(Math.max(0, index - 1))} onDuplicated={() => setSelected(rows.length)} />}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+const overrideLabels: Record<string, string> = { practice: 'Практика', qualifying: 'Квалификация', race: 'Основная гонка' };
+/** Editor of one week (weekly) or stage (championship). Also used by the week settings page of an event. */
+export function SeriesRowEditor(props: Props & { index: number; onRemoved?: () => void; onDuplicated?: () => void; standalone?: boolean }) {
+  const weekly = props.descriptor.code === 'weekly',
+    path = weekly ? 'weekly.weeks' : 'stages',
+    rows = read(props.value, path) as Settings[],
+    row = rows[props.index],
+    prefix = path + '.' + props.index,
+    locked = useContext(EditingRestrictions)?.structureLocked;
+  const changeRows = (v: Settings[]) => props.onChange(write(props.value, path, v));
+  const common = read(props.value, 'common.game') as Settings,
+    game = { ...common, track: row.track, environment: row.weather, catalogChoices: { ...(common.catalogChoices as Settings), weatherCodes: row.weatherCodes } };
+  const overrides = (row.raceOverrides ?? {}) as Settings;
+  const commonRace = (read(props.value, 'common.race') ?? {}) as Settings;
+  const commonValue = (key: string) => {
+    if (key === 'estimatedRaceMinutes') return commonRace.estimatedRaceMinutes == null ? '—' : `${commonRace.estimatedRaceMinutes} мин`;
+    const v = commonRace[key] as Settings | undefined;
+    if (!v) return '—';
+    return v.laps != null ? `${v.laps} кругов` : v.durationMinutes != null ? `${v.durationMinutes} мин` : '—';
+  };
+  const keys = [...['practice', 'qualifying', 'race'].filter((key) => props.descriptor.raceOverrideFields.includes(key)), ...(props.descriptor.raceOverrideFields.includes('estimatedRaceMinutes') ? ['estimatedRaceMinutes'] : [])];
+  return (
+    <div className="lsr-stack">
+      {!props.standalone && (
+        <div className="lsr-between" style={{ alignItems: 'flex-start' }}>
+          <div><h3 style={{ margin: 0, fontSize: 16, fontWeight: 750 }}>{weekly ? 'Неделя' : 'Этап'} {props.index + 1}</h3>{weekly && <div className="lsr-muted">Неделя {props.index + 1} календаря серии</div>}</div>
+          <div className="lsr-hstack" style={{ gap: 8 }}>
+            <button type="button" className="lsr-btn is-sm" disabled={props.disabled || locked}
+              onClick={() => { changeRows([...rows, { ...structuredClone(row), _editorId: crypto.randomUUID(), title: String(row.title) + ' — копия', ...(!weekly ? { startsAt: new Date().toISOString() } : {}) }]); props.onDuplicated?.(); }}>Дублировать</button>
+            <button type="button" className="lsr-btn is-sm is-danger" disabled={props.disabled || locked || rows.length === 1}
+              onClick={() => { changeRows(rows.filter((_, n) => n !== props.index)); props.onRemoved?.(); }}>Удалить</button>
+          </div>
+        </div>
+      )}
+      <div className="lsr-fields">
+        <Field {...props} prefix={prefix} path="title" label="Название" />
+        {!weekly && <Field {...props} prefix={prefix} path="startsAt" label="Старт гоночной сессии" type="datetime-local" />}
+      </div>
+      <ContentSelectionFields
+        path={prefix}
+        organizerId={String(read(props.value, 'event.organizerId'))}
+        scope="stage"
+        value={game}
+        disabled={!!props.disabled}
+        onChange={(next) => {
+          let v = write(props.value, prefix + '.track', next.track);
+          v = write(v, prefix + '.weather', next.environment);
+          v = write(v, prefix + '.weatherCodes', (next.catalogChoices as Settings).weatherCodes);
+          props.onChange(v);
+        }}
+      />
+      {!!keys.length && (
+        <div>
+          <div className="lsr-eyebrow" style={{ marginBottom: 9 }}>Отличия от общей программы</div>
+          <div className="lsr-stack is-tight" style={{ gap: 9 }}>
+            {keys.map((key) => {
+              const overridden = key in overrides;
+              const lapsMode = key === 'race' && overridden && (overrides[key] as Settings).laps !== null;
+              return (
+                <div className="lsr-override" key={key}>
+                  <div><label>{overrideLabels[key] ?? 'Ожидаемая длительность'}</label><div className="lsr-inherit">Общее значение: {commonValue(key)}</div></div>
+                  <div>{overridden ? (
+                    <Field {...props} prefix={prefix + '.raceOverrides'} path={key === 'estimatedRaceMinutes' ? key : key + (lapsMode ? '.laps' : '.durationMinutes')} label={key === 'estimatedRaceMinutes' ? 'Ожидаемая, мин' : lapsMode ? 'Кругов' : 'Длительность, мин'} type="number" />
+                  ) : <span className="lsr-inherit">Наследуется ({commonValue(key)})</span>}</div>
+                  {overridden ? (
+                    <button type="button" className="lsr-btn is-sm" disabled={props.disabled} onClick={() => { const next = { ...overrides }; delete next[key]; props.onChange(write(props.value, prefix + '.raceOverrides', next)); }}>Вернуть общее</button>
+                  ) : (
+                    <button type="button" className="lsr-btn is-sm" disabled={props.disabled}
+                      onClick={() => props.onChange(write(props.value, prefix + '.raceOverrides.' + key, key === 'estimatedRaceMinutes' ? (read(props.value, 'common.race.estimatedRaceMinutes') ?? '') : structuredClone(read(props.value, 'common.race.' + key)!)))}>Переопределить</button>
                   )}
-                </FieldGroup>
-                <ContentSelectionFields
-                  path={prefix}
-                  organizerId={String(read(props.value, 'event.organizerId'))}
-                  scope="stage"
-                  value={game}
-                  disabled={!!props.disabled}
-                  onChange={(next) => {
-                    let v = write(props.value, prefix + '.track', next.track);
-                    v = write(v, prefix + '.weather', next.environment);
-                    v = write(
-                      v,
-                      prefix + '.weatherCodes',
-                      (next.catalogChoices as Settings).weatherCodes,
-                    );
-                    props.onChange(v);
-                  }}
-                />
-                <Accordion>
-                  <AccordionSummary>Отличия от общей программы</AccordionSummary>
-                  <AccordionDetails>
-                    <Stack gap={1}>
-                      {['practice', 'qualifying', 'race']
-                        .filter((key) => props.descriptor.raceOverrideFields.includes(key))
-                        .map((key) => {
-                          const overrides = row.raceOverrides as Settings;
-                          return (
-                            <Stack key={key} gap={1}>
-                              <Typography>
-                                {key === 'practice'
-                                  ? 'Практика'
-                                  : key === 'qualifying'
-                                    ? 'Квалификация'
-                                    : 'Гонка'}
-                              </Typography>
-                              {key in overrides ? (
-                                <>
-                                  <Field
-                                    {...props}
-                                    prefix={prefix + '.raceOverrides'}
-                                    path={
-                                      key +
-                                      (key === 'race' && (overrides[key] as Settings).laps !== null
-                                        ? '.laps'
-                                        : '.durationMinutes')
-                                    }
-                                    label={
-                                      key === 'race' && (overrides[key] as Settings).laps !== null
-                                        ? 'Кругов'
-                                        : 'Длительность, мин'
-                                    }
-                                    type="number"
-                                  />
-                                  <Button
-                                    disabled={props.disabled}
-                                    onClick={() => {
-                                      const next = { ...overrides };
-                                      delete next[key];
-                                      props.onChange(
-                                        write(props.value, prefix + '.raceOverrides', next),
-                                      );
-                                    }}
-                                  >
-                                    Вернуть общее значение
-                                  </Button>
-                                </>
-                              ) : (
-                                <Button
-                                  disabled={props.disabled}
-                                  onClick={() =>
-                                    props.onChange(
-                                      write(
-                                        props.value,
-                                        prefix + '.raceOverrides.' + key,
-                                        structuredClone(read(props.value, 'common.race.' + key)!),
-                                      ),
-                                    )
-                                  }
-                                >
-                                  Изменить для {weekly ? 'недели' : 'этапа'}
-                                </Button>
-                              )}
-                            </Stack>
-                          );
-                        })}
-                      {props.descriptor.raceOverrideFields.includes('estimatedRaceMinutes') && (
-                        <Stack gap={1}>
-                          {'estimatedRaceMinutes' in (row.raceOverrides as Settings) ? (
-                            <>
-                              <Field
-                                {...props}
-                                prefix={prefix + '.raceOverrides'}
-                                path="estimatedRaceMinutes"
-                                label="Ожидаемая длительность гонки, мин"
-                                type="number"
-                              />
-                              <Button
-                                disabled={props.disabled}
-                                onClick={() => {
-                                  const next = { ...(row.raceOverrides as Settings) };
-                                  delete next.estimatedRaceMinutes;
-                                  props.onChange(
-                                    write(props.value, prefix + '.raceOverrides', next),
-                                  );
-                                }}
-                              >
-                                Вернуть общую оценку
-                              </Button>
-                            </>
-                          ) : (
-                            <Button
-                              disabled={props.disabled}
-                              onClick={() =>
-                                props.onChange(
-                                  write(
-                                    props.value,
-                                    prefix + '.raceOverrides.estimatedRaceMinutes',
-                                    read(props.value, 'common.race.estimatedRaceMinutes') ?? '',
-                                  ),
-                                )
-                              }
-                            >
-                              Изменить оценку длительности
-                            </Button>
-                          )}
-                        </Stack>
-                      )}
-                    </Stack>
-                  </AccordionDetails>
-                </Accordion>
-                {!weekly && (
-                  <>
-                    <Button
-                      disabled={props.disabled || locked}
-                      onClick={() =>
-                        props.onChange(
-                          write(
-                            props.value,
-                            prefix + '.practice',
-                            row.practice
-                              ? null
-                              : {
-                                  startsAt: row.startsAt,
-                                  durationMinutes:
-                                    props.descriptor.practiceDefaults.durationMinutes,
-                                },
-                          ),
-                        )
-                      }
-                    >
-                      {row.practice ? 'Убрать открытую практику' : 'Добавить открытую практику'}
-                    </Button>
-                    {!!row.practice && (
-                      <FieldGroup title="Открытая практика этапа">
-                        <Field
-                          {...props}
-                          prefix={prefix + '.practice'}
-                          path="startsAt"
-                          label="Начало"
-                          type="datetime-local"
-                        />
-                        <Field
-                          {...props}
-                          prefix={prefix + '.practice'}
-                          path="durationMinutes"
-                          label="Длительность, мин"
-                          type="number"
-                        />
-                      </FieldGroup>
-                    )}
-                  </>
-                )}
-                <Stack direction="row" gap={1}>
-                  <Button
-                    disabled={props.disabled || locked}
-                    onClick={() =>
-                      changeRows([
-                        ...rows,
-                        {
-                          ...structuredClone(row),
-                          _editorId: crypto.randomUUID(),
-                          title: String(row.title) + ' — копия',
-                          ...(!weekly ? { startsAt: new Date().toISOString() } : {}),
-                        },
-                      ])
-                    }
-                  >
-                    Дублировать
-                  </Button>
-                  <Button
-                    disabled={props.disabled || locked || rows.length === 1}
-                    color="error"
-                    onClick={() => changeRows(rows.filter((_, n) => n !== i))}
-                  >
-                    Удалить
-                  </Button>
-                </Stack>
-              </Stack>
-            </AccordionDetails>
-          </Accordion>
-        );
-      })}
-      <Button
-        disabled={props.disabled || locked}
-        onClick={() =>
-          changeRows([
-            ...rows,
-            {
-              ...structuredClone((read(props.descriptor.defaults, path) as Settings[])[0]),
-              _editorId: crypto.randomUUID(),
-              title: (weekly ? 'Неделя ' : 'Этап ') + (rows.length + 1),
-              ...(!weekly ? { startsAt: new Date().toISOString() } : {}),
-            },
-          ])
-        }
-      >
-        Добавить {weekly ? 'неделю' : 'этап'}
-      </Button>
-    </Stack>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {!weekly && (
+        <div className="lsr-stack is-tight">
+          <div className="lsr-between">
+            <div className="lsr-eyebrow">Открытая практика этапа</div>
+            <button type="button" className="lsr-btn is-sm" disabled={props.disabled || locked}
+              onClick={() => props.onChange(write(props.value, prefix + '.practice', row.practice ? null : { startsAt: row.startsAt, durationMinutes: props.descriptor.practiceDefaults.durationMinutes }))}>
+              {row.practice ? 'Убрать открытую практику' : 'Добавить открытую практику'}
+            </button>
+          </div>
+          {!!row.practice && (
+            <div className="lsr-fields">
+              <Field {...props} prefix={prefix + '.practice'} path="startsAt" label="Начало" type="datetime-local" />
+              <Field {...props} prefix={prefix + '.practice'} path="durationMinutes" label="Длительность, мин" type="number" />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 export function ParticipantFields(props: Props) {

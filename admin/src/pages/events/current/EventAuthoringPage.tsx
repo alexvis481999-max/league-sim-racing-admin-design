@@ -1,7 +1,7 @@
 import { saveDocument } from '../../../features/event-authoring/api';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Alert, Typography } from '@mui/material';
+import { ErrorState, LoadingBlock, Panel, usePageChrome } from '../../../ui/v16';
 import { ScenarioBuilder } from '../../../features/event-authoring/ScenarioBuilder';
 import type { Document, Settings } from '../../../features/event-authoring/types';
 import { apiFetch } from '../../../shared/api';
@@ -13,6 +13,7 @@ export function EventAuthoringPage() {
   const cloneKey = useRef(crypto.randomUUID());
   const clone = params.get('clone'),
     draft = params.get('draft');
+  usePageChrome({ back: { label: 'Назад', to: '/events' }, crumbs: [{ label: 'События', to: '/events' }, { label: clone ? 'Копия события' : draft ? 'Черновик' : 'Создать событие' }] });
   useEffect(() => {
     if (!clone) return;
     let alive = true;
@@ -39,8 +40,8 @@ export function EventAuthoringPage() {
       alive = false;
     };
   }, [clone]);
-  if (error) return <Alert severity="error">{error}</Alert>;
-  if (clone && !initial) return <Typography>Подготавливаем копию…</Typography>;
+  if (error) return <ErrorState error={error} />;
+  if (clone && !initial) return <Panel><LoadingBlock rows={5} label="Подготавливаем копию" /></Panel>;
   return (
     <ScenarioBuilder
       key={draft ?? clone ?? 'new'}

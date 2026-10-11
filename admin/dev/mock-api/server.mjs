@@ -86,6 +86,7 @@ const server = http.createServer(async (req, res) => {
   for await (const chunk of req) raw += chunk;
   let body = null;
   try { body = raw ? JSON.parse(raw) : null; } catch { body = null; }
+  if (req.method !== 'GET' && process.env.MOCK_API_LOG !== '0') console.log(`[mock-api] ${req.method} ${url.pathname} key=${req.headers['idempotency-key'] ?? '-'} body=${raw.slice(0, 300)}`);
   const route = routes.find((r) => r.method === req.method && r.pattern.test(url.pathname));
   if (!route) {
     console.log(`[mock-api] 404 ${req.method} ${url.pathname}${url.search}`);

@@ -52,22 +52,24 @@ export function Field({
   const change = (next: Value) => onChange(write(value, key, next));
   if (options && options.length <= 6)
     return (
-      <Stack spacing={1} data-field-path={key}>
-        <Typography variant="body2">{label}</Typography>
-        <Stack direction="row" gap={1} flexWrap="wrap">
+      <div className="lsr-field" data-field-path={key}>
+        <span className="lsr-field-label">{label}</span>
+        <div className="lsr-filterbar" role="group" aria-label={label}>
           {options.map((option) => (
-            <Button
+            <button
+              type="button"
               key={option}
               disabled={inactive}
               aria-pressed={String(current) === option}
-              variant={String(current) === option ? 'contained' : 'outlined'}
+              className={`lsr-pillbtn is-lg${String(current) === option ? ' is-active' : ''}`}
               onClick={() => change(type === 'number' ? Number(option) : option)}
             >
               {optionLabels[option] ?? option}
-            </Button>
+            </button>
           ))}
-        </Stack>
-      </Stack>
+        </div>
+        {issue && <small role="alert" style={{ color: '#ae4743' }}>{issue.message}</small>}
+      </div>
     );
   if (type === 'boolean')
     return (
@@ -169,24 +171,13 @@ const optionLabels: Record<string, string> = {
   reset_points: 'С обнулением очков',
   free: 'Без потери очков',
 };
-export function FieldGroup({ title, children }: { title: string; children: React.ReactNode }) {
+export function FieldGroup({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return (
-    <Stack spacing={2} sx={{ py: 2, borderTop: 1, borderColor: 'divider' }}>
-      <Typography variant="subtitle1" fontWeight={700}>
-        {title}
-      </Typography>
-      <Box
-        className="authoring-field-grid"
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: 'repeat(2,minmax(0,1fr))' },
-          gap: 2,
-          alignItems: 'start',
-        }}
-      >
-        {children}
-      </Box>
-    </Stack>
+    <section className="lsr-formgroup authoring-group">
+      <h3>{title}</h3>
+      {description && <p>{description}</p>}
+      <div className="lsr-fields authoring-field-grid" style={description ? undefined : { marginTop: 13 }}>{children}</div>
+    </section>
   );
 }
 export function EnvironmentFields({

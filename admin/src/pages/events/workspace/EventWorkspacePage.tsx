@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Button, EmptyState, ErrorState, PageHeader, Skeleton, Tabs, usePageChrome } from '../../../ui/v16';
 import { useWorkspaceData, type WorkspaceSummary } from '../current/workspace-data';
 import { WorkspaceSection } from '../current/WorkspaceSections';
-import { WorkspaceMaterials } from '../current/WorkspaceOverview';
+import { AppearanceTab } from './common/AppearanceTab';
 import { WorkspaceConduct } from '../current/WorkspaceConduct';
 import { WorkspaceContext, useWorkspace, useWorkspaceNav, type Section } from './context';
 import { EventHeader } from './EventShell';
@@ -11,8 +11,13 @@ import { useEventCommands } from './useEventCommands';
 import { WeeklyOverview } from './weekly/WeeklyOverview';
 import { WeeksList } from './weekly/WeeksList';
 import { WeekPage } from './weekly/WeekPage';
+import { WeekSettings } from './weekly/WeekSettings';
 import { RacePage } from './race/RacePage';
 import { SettingsTab } from './common/SettingsTab';
+import { ParticipantsTab } from './common/Participants';
+import { ResultsTab } from './common/ResultsTab';
+import { ServersTab } from './common/ServersTab';
+import { JournalTab } from './common/JournalTab';
 
 type TabConfig = { key: Section; label: string };
 const weeklyTabs: TabConfig[] = [
@@ -70,7 +75,7 @@ function WorkspaceRoutes({ commands, refreshError }: { commands: ReturnType<type
   const stage = nav.params.get('stage');
   const week = nav.params.get('week');
   if (stage) return <RacePage key={stage} blockKey={stage} />;
-  if (week) return <WeekPage key={week} weekKey={week} />;
+  if (week) return nav.params.get('view') === 'settings' ? <WeekSettings key={week} weekKey={week} /> : <WeekPage key={week} weekKey={week} />;
   return <EventTabs commands={commands} refreshError={refreshError} />;
 }
 
@@ -97,22 +102,23 @@ function EventTabs({ commands, refreshError }: { commands: ReturnType<typeof use
     if (section === 'settings' || section === 'appearance') return null;
     return shell;
   })();
+  const tabsNode = <Tabs label="Разделы события" items={tabs} value={section} onChange={(key) => nav.section(key)} />;
   const legacy = (key: string, active: boolean) => <WorkspaceSection section={key} eventId={eventId} active={active} summary={summary} busy={ctx.blocked} execute={ctx.execute} />;
   const panes: Partial<Record<Section, (active: boolean) => ReactNode>> = {
     overview: () => (weekly ? <WeeklyOverview /> : legacy('execution', false)),
     weeks: () => <WeeksList />,
     program: (active) => <WorkspaceConduct section="execution" eventId={eventId} active={active} summary={summary} busy={ctx.blocked} execute={ctx.execute} />,
-    participants: (active) => legacy('participants', active),
-    results: (active) => legacy('results', active),
-    servers: (active) => legacy('execution', active),
-    journal: (active) => legacy('history', active),
-    appearance: () => <WorkspaceMaterials data={summary} />,
-    settings: (active) => <SettingsTab active={active} />,
+    participants: (active) => <ParticipantsTab active={active} />,
+    results: (active) => <ResultsTab active={active} />,
+    servers: (active) => <ServersTab active={active} />,
+    journal: (active) => <JournalTab active={active} />,
+    appearance: (active) => <AppearanceTab active={active} tabs={tabsNode} />,
+    settings: (active) => <SettingsTab active={active} tabs={tabsNode} />,
   };
   return (
     <>
       {header}
-      <Tabs label="Разделы события" items={tabs} value={section} onChange={(key) => nav.section(key)} />
+      {header && tabsNode}
       {tabs.filter((t) => visited.has(t.key) || t.key === section).map((t) => (
         <div key={t.key} hidden={t.key !== section}>{panes[t.key]?.(t.key === section)}</div>
       ))}

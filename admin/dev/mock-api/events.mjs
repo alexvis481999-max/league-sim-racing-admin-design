@@ -31,7 +31,7 @@ const weeklyTracks = ['monza', 'spa', 'imola', 'silverstone', 'nurburgring', 'su
 const weeklyTimes = ['12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'];
 const weeklyWeather = (w) => (w === 4 ? fixedWeather('7_heavy_clouds', 14, 17) : w % 3 === 1 ? fixedWeather('4_mid_clear', 18, 24) : fixedWeather('3_clear', 22, 30));
 const weeklySettings = {
-  event: { organizerId: '1', title: 'Weekly · Осенний сезон', description: '<p>Серия регулярных гонок на Assetto Corsa. Гонки каждые 30 минут, разные трассы по неделям.</p>', timezone: 'Europe/Moscow', gameCode: 'assetto_corsa', disciplineCode: 'circuit' },
+  event: { organizerId: '1', title: 'Weekly · Осенний сезон', description: '<p>Серия регулярных гонок на Assetto Corsa. Гонки каждые 30 минут, разные трассы по неделям.</p>', timezone: 'Europe/Moscow', gameCode: 'assetto_corsa', disciplineCode: 'circuit', presentation: { coverUrl: null, subtitle: 'Честные гонки и соревновательная атмосфера', cardAppearance: null } },
   minimumParticipantsPerRace: 2,
   raceRegistration: { mode: 'open_until_capacity' },
   scoring: { mode: 'classic_top_10', points: { 1: 25, 2: 18, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1 } },
@@ -39,22 +39,21 @@ const weeklySettings = {
   authoring: { presetId: 'club-racing', version: 2, editorVersion: 2 },
   weekly: {
     firstDate: weeklyFirstDate,
-    dayTimes: Object.fromEntries([1, 2, 3, 4, 5, 6, 7].map((d) => [String(d), weeklyTimes])),
+    dayTimes: Object.fromEntries([0, 1, 2, 3, 4, 5, 6].map((d) => [String(d), weeklyTimes])),
     weeks: weeklyTracks.map((code, i) => ({ _editorId: 'week-' + i, title: `Неделя ${i + 1} · ${TRACKS.find((t) => t.code === code).title}`, track: { code, layoutCode: TRACKS.find((t) => t.code === code).layouts[0].code || null }, weather: { sunAngle: 32, weather: weeklyWeather(i + 1), dynamicTrack: { sessionStart: 96, randomness: 2, sessionTransfer: 80, lapGain: 10 } }, weatherCodes: [], raceOverrides: i === 4 ? { race: { durationMinutes: 30, laps: null } } : {} })),
   },
   participantAdmission: { minimumPilotLicense: 'D', minimumSafetyLicense: 'D' },
   common: { game: baseGame('', null, fixedWeather('3_clear', 22, 30)), race: raceSettings({ practice: { durationMinutes: 15 }, qualifying: { durationMinutes: 10 }, race: { durationMinutes: 25, laps: null } }) },
   registrationRules: { durationMinutes: 1440, closesBeforeMinutes: 3 },
-  presentation: { coverUrl: null, subtitle: 'Честные гонки и соревновательная атмосфера', cardAppearance: null },
 };
 const FAILED_RACES = new Set(['3-18', '3-40', '2-07']);
 const UNCERTAIN_RACES = new Set([]);
 
-function weeklyBlocks() {
+function weeklyBlocks(firstDate = weeklyFirstDate, weeks = 12, firstId = 5000) {
   const blocks = [];
-  let id = 5000;
-  for (let w = 1; w <= 12; w++) {
-    const weekStart = addDays(weeklyFirstDate, (w - 1) * 7);
+  let id = firstId;
+  for (let w = 1; w <= weeks; w++) {
+    const weekStart = addDays(firstDate, (w - 1) * 7);
     for (let d = 0; d < 7; d++) {
       const date = addDays(weekStart, d);
       weeklyTimes.forEach((time, t) => {
@@ -79,6 +78,9 @@ function weeklyBlocks() {
   return blocks;
 }
 const WEEKLY_BLOCKS = weeklyBlocks();
+const WINTER_FIRST = '2026-12-14';
+const WINTER_BLOCKS = weeklyBlocks(WINTER_FIRST, 4, 9000);
+const winterSettings = { ...structuredClone(weeklySettings), event: { ...weeklySettings.event, title: 'Weekly · Зимний сезон' }, weekly: { ...structuredClone(weeklySettings.weekly), firstDate: WINTER_FIRST, weeks: structuredClone(weeklySettings.weekly.weeks).slice(0, 4) } };
 
 function blockDisplay(b) {
   const e = b.execution;
@@ -133,6 +135,7 @@ function scheduleBlock(b) {
 const presentation = (subtitle) => ({ coverUrl: null, subtitle, cardAppearance: null });
 export const EVENTS = [
   { id: WEEKLY_ID, title: 'Weekly · Осенний сезон', description: '<p>Серия регулярных гонок на Assetto Corsa. Гонки каждые 30 минут, разные трассы по неделям.</p>', scenarioCode: 'weekly', scenarioTitle: 'Регулярные гонки', organizerId: '1', gameCode: 'assetto_corsa', disciplineCode: 'circuit', timezone: 'Europe/Moscow', startsAt: iso(WEEKLY_BLOCKS[0].start), endsAt: iso(WEEKLY_BLOCKS.at(-1).end), status: 'RUNNING', version: '42', presentation: presentation('Честные гонки и соревновательная атмосфера'), settings: weeklySettings, blocks: WEEKLY_BLOCKS },
+  { id: '1040', title: 'Weekly · Зимний сезон', description: '<p>Четыре недели зимних гонок. Расписание и условия ещё можно менять.</p>', scenarioCode: 'weekly', scenarioTitle: 'Регулярные гонки', organizerId: '1', gameCode: 'assetto_corsa', disciplineCode: 'circuit', timezone: 'Europe/Moscow', startsAt: iso(WINTER_BLOCKS[0].start), endsAt: iso(WINTER_BLOCKS.at(-1).end), status: 'PUBLISHED', version: '7', presentation: presentation('Зимняя серия'), settings: winterSettings, blocks: WINTER_BLOCKS },
   { id: '2041', title: 'LSR GT3 Championship', description: '<p>Восьмиэтапный чемпионат GT3 с квалификацией, зачётом и регистрацией.</p>', scenarioCode: 'championship', scenarioTitle: 'Чемпионат', organizerId: '1', gameCode: 'assetto_corsa', disciplineCode: 'circuit', timezone: 'Europe/Moscow', startsAt: '2026-09-25T15:00:00.000Z', endsAt: '2026-11-13T18:00:00.000Z', status: 'RUNNING', version: '17', presentation: presentation('Восемь этапов GT3'), blocks: [] },
   { id: '3110', title: 'Friday GT Sprint', description: '<p>Одиночная гонка с квалификацией и сплитами.</p>', scenarioCode: 'circuit_single_race', scenarioTitle: 'Разовая гонка', organizerId: '1', gameCode: 'assetto_corsa', disciplineCode: 'circuit', timezone: 'Europe/Moscow', startsAt: '2026-10-16T15:00:00.000Z', endsAt: '2026-10-16T16:30:00.000Z', status: 'PUBLISHED', version: '5', presentation: presentation('Пятничный спринт'), blocks: [] },
   { id: '4112', title: 'GT3 Open Practice', description: '<p>Практика с мониторингом сессий и подключений.</p>', scenarioCode: 'practice', scenarioTitle: 'Практика', organizerId: '1', gameCode: 'assetto_corsa', disciplineCode: 'circuit', timezone: 'Europe/Moscow', startsAt: '2026-10-10T07:00:00.000Z', endsAt: '2026-10-10T19:00:00.000Z', status: 'PUBLISHED', version: '3', presentation: presentation('Открытая практика'), blocks: [] },
@@ -150,7 +153,7 @@ function eventStatusView(e) {
   if (e.status === 'CANCELLED') return { ...status('CANCELLED', title ? `${title} отменён` : 'Отменено', '2026-10-01T09:00:00.000Z', { code: 'CANCELLED', message: 'Недостаточно участников.' }), currentStage: null };
   if (e.status === 'COMPLETED') return { ...status('COMPLETED', title ? `${title} завершён` : 'Завершено', e.endsAt), currentStage: null };
   if (e.status === 'DRAFT') return { ...status('DRAFT', 'Черновик'), currentStage: null };
-  if (e.scenarioCode === 'weekly') {
+  if (e.scenarioCode === 'weekly' && e.status === 'RUNNING') {
     const live = e.blocks.find((b) => b.execution?.status === 'RUNNING');
     return { ...status('RUNNING', 'Серия идёт'), currentStage: live ? { key: live.key, title: live.title } : null };
   }
