@@ -1,0 +1,54 @@
+/* Серверы практики (v16 renderPractice / practiceForm). Tokens come from ui/v16/v16.css. */
+.lsr-practice > .lsr-link { margin-bottom: 10px; }
+.lsr-practice-title { display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.lsr-practice-title .lsr-badge { font-size: 12px; letter-spacing: 0; }
+.lsr-practice-pad { padding: 16px; }
+.lsr-practice-footer { color: #8492a4; text-align: right; font-size: 11px; margin-top: -2px; }
+
+/* list */
+.lsr-practice-rowlink { font-weight: 700; color: var(--lsr-ink); text-decoration: none; font-size: 12.5px; }
+.lsr-practice-rowlink:hover { color: var(--lsr-blue); }
+.lsr-practice-rowlink:focus-visible { outline: 2px solid var(--lsr-blue); outline-offset: 2px; border-radius: 3px; }
+
+/* live */
+.lsr-practice-track { font-size: 14px; color: var(--lsr-ink); }
+.lsr-practice-divider { height: 1px; background: var(--lsr-line); margin: 16px 0; }
+.lsr-practice-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.lsr-practice-fact { min-width: 0; }
+.lsr-practice-fact > div { font-size: 12px; color: var(--lsr-sub); }
+.lsr-practice-fact > b { display: block; margin-top: 2px; font-size: 13px; color: var(--lsr-ink); overflow-wrap: anywhere; }
+.lsr-practice-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0 0; }
+.lsr-practice-actions:last-of-type { margin-bottom: 10px; }
+.lsr-practice .lsr-panel-body > .lsr-notice + .lsr-mutedline, .lsr-practice .lsr-panel-body > .lsr-notice { margin-top: 12px; }
+.lsr-practice .lsr-panel-body > .lsr-practice-divider + .lsr-notice { margin-top: 0; }
+.lsr-practice-rows { padding: 6px 20px 6px; }
+.lsr-practice-rows .lsr-row-item { padding: 12px 19px; }
+.lsr-practice-rows .lsr-row-item > span { font-size: 13px; color: var(--lsr-text); text-align: right; min-width: 0; overflow-wrap: anywhere; }
+.lsr-practice-p { margin: 0; color: var(--lsr-text); }
+
+/* form */
+.lsr-practice-form .lsr-panel { scroll-margin-top: 80px; }
+.lsr-practice-savebar { position: sticky; bottom: 0; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 14px 0; border-top: 1px solid var(--lsr-line); background: var(--lsr-bg); box-shadow: 0 -10px 16px -14px rgba(16, 36, 62, .25); }
+.lsr-practice-savebar-status { display: grid; gap: 4px; min-width: 0; flex: 1; font-size: 12px; color: var(--lsr-sub); }
+.lsr-practice-savebar-status .is-dirty { color: #865b25; font-weight: 650; }
+.lsr-practice-issues { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; color: #9f3d3d; }
+.lsr-practice-issues .lsr-link { color: #ae4743; }
+
+@media (max-width: 700px) {
+  .lsr-practice-facts { grid-template-columns: 1fr; }
+  .lsr-practice-rows { padding: 4px 6px; }
+  .lsr-practice-savebar > .lsr-hstack { width: 100%; }
+  .lsr-practice-savebar > .lsr-hstack .lsr-btn { flex: 1; }
+}
+.lsr-practice .lsr-stack > .lsr-kpis { margin-bottom: 2px; }
+/* Shared game fields (features/event-authoring FieldGroup) shown as module panels, like the mockup's "Трасса и машины" / "Погода" / "Физика". */
+.lsr-practice-game { scroll-margin-top: 80px; }
+.lsr-practice-game .lsr-formgroup:not(.lsr-formgroup .lsr-formgroup) { padding: 0; border-radius: 11px; }
+.lsr-practice-game .lsr-formgroup:not(.lsr-formgroup .lsr-formgroup) > h3 { margin: 0; padding: 17px 19px; border-bottom: 1px solid var(--lsr-line2); font-size: 15px; }
+.lsr-practice-game .lsr-formgroup:not(.lsr-formgroup .lsr-formgroup) > p { margin: 0; padding: 12px 20px 0; }
+.lsr-practice-game .lsr-formgroup:not(.lsr-formgroup .lsr-formgroup) > .lsr-fields { margin-top: 0 !important; padding: 18px 20px; }
+@media (max-width: 700px) {
+  .lsr-practice-game .lsr-formgroup:not(.lsr-formgroup .lsr-formgroup) > h3 { padding: 14px; }
+  .lsr-practice-game .lsr-formgroup:not(.lsr-formgroup .lsr-formgroup) > .lsr-fields { padding: 14px; }
+}

@@ -12,6 +12,8 @@ vi.mock('../../shared/api', async () => ({
   ...(await vi.importActual('../../shared/api')),
   apiFetch: fetch,
 }));
+// No real WebSocket in tests: refresh subscriptions are covered by the page logic, not by the socket.
+vi.mock('../../shared/realtime', () => ({ subscribeAdminRefresh: () => () => {} }));
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
@@ -76,9 +78,11 @@ function setup(path = '/practice-servers') {
     </MemoryRouter>,
   );
 }
-it('перезапуск отправляется одной командой; клиент не выполняет stop/start', async () => {
+it('перезапуск подтверждается и отправляется одной командой; клиент не выполняет stop/start', async () => {
   setup('/practice-servers/2');
-  await userEvent.click(await screen.findByRole('button', { name: 'Перезапуск' }));
+  await userEvent.click(await screen.findByRole('button', { name: /Перезапустить сервер/ }));
+  expect(fetch.mock.calls.some(([, i]) => i?.method)).toBe(false);
+  await userEvent.click(await screen.findByRole('button', { name: 'Перезапустить' }));
   await waitFor(() =>
     expect(
       fetch.mock.calls.some(
@@ -111,11 +115,9 @@ it('настройки активного сервиса сохраняются 
 it('сохраняет новую длительность в обоих полях и оставляет текущую сессию', async () => {
   setup('/practice-servers/2/edit');
   await screen.findByLabelText('Название');
-  await userEvent.click(screen.getByRole('tab', { name: 'Сессия' }));
-  const duration = screen.getByLabelText('Длительность цикла, минут');
+  const duration = screen.getByLabelText('Длительность цикла, мин');
   await userEvent.clear(duration);
   await userEvent.type(duration, '90');
-  await userEvent.click(screen.getByRole('tab', { name: 'Проверка' }));
   expect(screen.getByText('Есть несохранённые изменения')).toBeTruthy();
   await userEvent.click(screen.getByRole('button', { name: 'Сохранить для следующего цикла' }));
   await waitFor(() =>
@@ -154,7 +156,6 @@ it('создаёт остановленный сервер через общие
   await screen.findByLabelText('Организатор');
   fireEvent.mouseDown(screen.getByLabelText('Организатор'));
   fireEvent.click(await screen.findByRole('option', { name: 'Лига' }));
-  fireEvent.click(screen.getByRole('tab', { name: 'Условия' }));
   fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Трасса' }));
   fireEvent.click(await screen.findByRole('option', { name: 'Akina' }));
   fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Разрешённые машины' }));
@@ -180,7 +181,7 @@ it('создаёт остановленный сервер через общие
   expect(fetch.mock.calls.some(([p]) => p.endsWith('/start'))).toBe(false);
 }, 15000);
 
-it('карточка открывает лайв, журнал загружается только при выборе вкладки', async () => {
+it('строка списка открывает лайв, журнал загружается только при выборе вкладки', async () => {
   setup();
   await userEvent.click(await screen.findByRole('link', {name: 'Открыть Тренировка'}));
   await screen.findByText('Текущая сессия');
@@ -191,9 +192,11 @@ it('карточка открывает лайв, журнал загружае�
   await userEvent.click(screen.getByRole('tab', {name: 'Настройки'}));
   await screen.findByLabelText('Название');
 });
-it('кнопка питания карточки останавливает сервер, не открывая его', async () => {
+it('кнопка питания строки останавливает сервер после подтверждения, не открывая его', async () => {
   setup();
   await userEvent.click(await screen.findByRole('button', {name: 'Остановить сервер'}));
+  expect(fetch.mock.calls.some(([p]) => p.endsWith('/2/stop'))).toBe(false);
+  await userEvent.click(await screen.findByRole('button', {name: 'Принудительно остановить'}));
   await waitFor(() => expect(fetch.mock.calls.some(([p,i]) => p.endsWith('/2/stop') && i?.method === 'POST')).toBe(true));
   expect(screen.queryByRole('tab', {name: 'Лайв'})).toBeNull();
   expect(fetch.mock.calls.some(([p]) => p.includes('/sessions?'))).toBe(false);
@@ -218,7 +221,24 @@ it('остановленный сервер запускается одной к
   fetch.mockImplementation((p: string, i?: RequestInit) => p.startsWith('/admin/practice-servers?') ? Promise.resolve({items:[{...server,status:'STOPPED',currentCycle:null,allowedActions:{...server.allowedActions,start:true}}],total:1}) : original(p,i));
   // Обновляем список через фильтр, чтобы получить остановленный сервер.
   await screen.findByRole('link', {name:'Открыть Тренировка'});
-  await userEvent.click(screen.getByRole('button', {name:'Состояние: Остановленные'}));
+  await userEvent.click(screen.getByRole('button', {name:'Остановленные'}));
   await userEvent.click(await screen.findByRole('button', {name:'Запустить сервер'}));
   await waitFor(() => expect(fetch.mock.calls.some(([p,i]) => p.endsWith('/2/start') && i?.method === 'POST')).toBe(true));
+});
+
+it('команды, не разрешённые сервером, недоступны; отказ в доступе к списку не выглядит пустым списком', async () => {
+  setup('/practice-servers/2');
+  const original = fetch.getMockImplementation()!;
+  fetch.mockImplementation((p: string, i?: RequestInit) => p === '/admin/practice-servers/2' ? Promise.resolve({ ...server, allowedActions: { configure: true, start: false, pause: false, stop: false, restart: false } }) : original(p, i));
+  cleanup();
+  render(<MemoryRouter initialEntries={['/practice-servers/2']}><PracticeServersPage access={{ grants: [] } as unknown as AdminAccess} /></MemoryRouter>);
+  expect((await screen.findByRole('button', { name: 'Пауза после сессии' })).hasAttribute('disabled')).toBe(true);
+  expect(screen.getByRole('button', { name: /Принудительно остановить/ }).hasAttribute('disabled')).toBe(true);
+  expect(screen.getByRole('button', { name: /Перезапустить сервер/ }).hasAttribute('disabled')).toBe(true);
+  cleanup();
+  fetch.mockImplementation((p: string) => p.startsWith('/admin/practice-servers?') ? Promise.reject(new ApiError('Forbidden', 403)) : Promise.resolve([]));
+  render(<MemoryRouter initialEntries={['/practice-servers']}><PracticeServersPage access={{ grants: [] } as unknown as AdminAccess} /></MemoryRouter>);
+  expect(await screen.findByText('Недостаточно прав')).toBeTruthy();
+  expect(screen.queryByText('Серверов пока нет')).toBeNull();
+  expect(screen.queryByRole('button', { name: /Создать сервер/ })).toBeNull();
 });
