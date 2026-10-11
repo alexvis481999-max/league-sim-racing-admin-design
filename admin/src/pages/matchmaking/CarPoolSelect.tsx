@@ -1,33 +1,63 @@
 import { useState } from 'react';
-import { Autocomplete, Box, Button, Chip, Stack, TextField, Typography } from '@mui/material';
+import Autocomplete from '@mui/material/Autocomplete';
+import MuiTextField from '@mui/material/TextField';
 import type { CatalogOption } from '../../features/event-authoring/CatalogFields';
+import { Button } from '../../ui/v16';
 
-export function CarPoolSelect({label,items,value,onChange,disabled=false,helperText,error=false,itemType='car'}:{
-  label:string;items:CatalogOption[];value:string[];onChange(value:string[]):void;disabled?:boolean;helperText?:string;error?:boolean;itemType?:'car'|'weather';
+/** Searchable multi-select for a large catalog: selected items stay visible as removable chips, missing catalog items included (cars of the common pool). */
+export function CarPoolSelect({ label, items, value, onChange, disabled = false, helperText, error = false }: {
+  label: string;
+  items: CatalogOption[];
+  value: string[];
+  onChange(value: string[]): void;
+  disabled?: boolean;
+  helperText?: string;
+  error?: boolean;
 }) {
-  const [draft,setDraft]=useState<CatalogOption|null>(null);
-  const available=items.filter(car=>!value.includes(car.code));
-  const selected=draft&&available.find(car=>car.code===draft.code)||null;
-  return <Box sx={{gridColumn:'1 / -1',minWidth:0}} role="group" aria-label={label}>
-    <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1} flexWrap="wrap" sx={{mb:1}}>
-      <Typography variant="subtitle2">{label} · {value.length}</Typography>
-      <Stack direction="row" gap={1}>
-        <Button size="small" disabled={disabled||!available.length} onClick={()=>onChange([...new Set([...value,...items.map(car=>car.code)])])}>Выбрать все</Button>
-        <Button size="small" disabled={disabled||!value.length} onClick={()=>onChange([])}>Очистить</Button>
-      </Stack>
-    </Stack>
-    <Stack direction="row" gap={1} sx={{mb:1.5,maxWidth:600}}>
-      <Autocomplete size="small" sx={{flex:1,minWidth:0}} options={available} value={selected} disabled={disabled}
-        getOptionLabel={car=>car.title} isOptionEqualToValue={(a,b)=>a.code===b.code}
-        filterOptions={(options,{inputValue})=>options.filter(car=>`${car.title} ${car.code}`.toLowerCase().includes(inputValue.toLowerCase()))}
-        onChange={(_,car)=>setDraft(car)} noOptionsText={itemType==='weather'?'Доступных вариантов погоды не найдено':'Доступных машин не найдено'}
-        renderInput={params=><TextField {...params} label={`${itemType==='weather'?'Добавить погоду':'Добавить машину'} — ${label.toLowerCase()}`} placeholder="Название или код"/>}/>
-      <Button variant="outlined" disabled={disabled||!selected} onClick={()=>{if(selected){onChange([...value,selected.code]);setDraft(null);}}}>Добавить</Button>
-    </Stack>
-    <Stack direction="row" gap={1} flexWrap="wrap" useFlexGap>
-      {value.map(code=>{const car=items.find(car=>car.code===code);return <Chip key={code} label={car?.title??`${code} (недоступен)`} title={code} variant="outlined" disabled={disabled} onDelete={()=>onChange(value.filter(id=>id!==code))} sx={{height:34,maxWidth:'100%'}}/>;})}
-      {!value.length&&<Typography variant="body2" color="text.secondary">{itemType==='weather'?'Погода не выбрана.':'Машины не выбраны.'}</Typography>}
-    </Stack>
-    {helperText&&<Typography variant="caption" color={error?'error':'text.secondary'} sx={{display:'block',mt:1}}>{helperText}</Typography>}
-  </Box>;
+  const [draft, setDraft] = useState<CatalogOption | null>(null);
+  const available = items.filter((item) => !value.includes(item.code));
+  const selected = (draft && available.find((item) => item.code === draft.code)) || null;
+  return (
+    <div className="lsr-mm-poolselect" role="group" aria-label={label}>
+      <div className="lsr-between">
+        <h3 className="lsr-mm-heading">{label} · {value.length}</h3>
+        <div className="lsr-hstack">
+          <Button size="sm" disabled={disabled || !available.length} onClick={() => onChange([...new Set([...value, ...items.map((item) => item.code)])])}>Выбрать все</Button>
+          <Button size="sm" disabled={disabled || !value.length} onClick={() => onChange([])}>Очистить</Button>
+        </div>
+      </div>
+      <div className="lsr-mm-addrow">
+        <Autocomplete
+          size="small"
+          className="lsr-mm-addrow-input"
+          options={available}
+          value={selected}
+          disabled={disabled}
+          getOptionLabel={(item) => item.title}
+          isOptionEqualToValue={(a, b) => a.code === b.code}
+          filterOptions={(options, { inputValue }) => options.filter((item) => `${item.title} ${item.code}`.toLowerCase().includes(inputValue.toLowerCase()))}
+          onChange={(_, item) => setDraft(item)}
+          noOptionsText="Доступных машин не найдено"
+          renderInput={(params) => <MuiTextField {...params} label={`Добавить машину — ${label.toLowerCase()}`} placeholder="Название или код" />}
+        />
+        <Button disabled={disabled || !selected} onClick={() => { if (selected) { onChange([...value, selected.code]); setDraft(null); } }}>Добавить</Button>
+      </div>
+      {value.length ? (
+        <div className="lsr-mm-chipset">
+          {value.map((code) => {
+            const title = items.find((item) => item.code === code)?.title ?? `${code} (недоступен)`;
+            return (
+              <span key={code} className="lsr-mm-chip is-picked is-static" title={code}>
+                {title}
+                <button type="button" className="lsr-mm-chip-remove" disabled={disabled} aria-label={`Убрать ${title}`} onClick={() => onChange(value.filter((id) => id !== code))}>×</button>
+              </span>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="lsr-muted lsr-mm-none">Машины не выбраны.</p>
+      )}
+      {helperText && <small className={error ? 'lsr-mm-error' : 'lsr-help'}>{helperText}</small>}
+    </div>
+  );
 }

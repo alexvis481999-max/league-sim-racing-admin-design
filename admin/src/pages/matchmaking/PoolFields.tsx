@@ -1,556 +1,299 @@
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { useState } from 'react';
+import { TrackSelectionFields } from '../../features/event-authoring/CatalogFields';
+import { WeatherFields } from '../../features/standalone/WeatherFields';
+import { Button, Checkbox, EmptyState, Fields, Notice, Panel, SelectField, Table, TextField, clickableRow } from '../../ui/v16';
 import { CarPoolSelect } from './CarPoolSelect';
-import { FieldGroup } from '../../features/event-authoring/Fields';
+import { layoutTitle, type PoolCatalog } from './pool-catalog';
 import {
-  TrackSelectionFields,
-} from '../../features/event-authoring/CatalogFields';
-import { useEffect, useState } from 'react';
-import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Autocomplete,
-  Alert,
-  Button,
-  Checkbox,
-  FormControlLabel,
-  MenuItem,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
-import { subscribeAdminRefresh } from '../../shared/realtime';
-import { apiFetch } from '../../shared/api';
-import { WeatherFields, type WeatherConfig } from '../../features/standalone/WeatherFields';
-export type Pools = {
-  version: 1;
-  carIds: string[];
-  carSetCode?: string;
-  offerCount: 2 | 3 | 4 | 'all';
-  readyTimeoutSeconds: number;
-  minimumPilotLicense: 'D' | 'C' | 'B' | 'A';
-  tiePolicy: 'double_loss' | 'omt';
-  tracks: {
-    key: string;
-    title: string;
-    code: string;
-    layoutCode: string | null;
-    enabled: boolean;
-    weight: number;
-    durationMinutes: number;
-    carIds: string[];
-    weatherKeys: string[];
-  }[];
-  weather: {
-    key: string;
-    title: string;
-    enabled: boolean;
-    weight: number;
-    codes: string[];
-    weather: WeatherConfig;
-  }[];
-};
-export const newPools = (): Pools => ({
-  version: 1,
-  carIds: [],
-  offerCount: 2,
-  readyTimeoutSeconds: 120,
-  minimumPilotLicense: 'D',
-  tiePolicy: 'double_loss',
-  tracks: [],
-  weather: [],
-});
-type Item = {
-  id: string;
-  code: string;
-  title: string;
-  metadata?: {
-    [key: string]: unknown;
-    carIds?: string[];
-    layouts?: { code: string; title?: string; name?: string }[];
-  };
-};
-export function selectionProbability(weight: number, weights: number[]) {
-  const total = weights.reduce(
-    (sum, value) => sum + (Number.isFinite(value) && value > 0 ? value : 0),
-    0,
-  );
-  return total && Number.isFinite(weight) && weight > 0
-    ? Math.round((weight / total) * 1000) / 10
-    : 0;
-}
-/** Changing the global pool also removes dangling references, visibly leaving invalid short subpools for correction. */
-export function changeCommonCars(value: Pools, carIds: string[], carSetCode?: string): Pools {
-  return {
-    ...value,
-    carIds,
-    carSetCode,
-    tracks: value.tracks.map((t) => ({
-      ...t,
-      carIds: t.carIds.filter((id) => carIds.includes(id)),
-    })),
-  };
-}
-export function PoolFields({
-  value,
-  onChange,
-  disabled,
-  section = 'cars',
-}: {
+  changeCommonCars, subpoolShort, trackProbability, weatherProbability,
+  type Pools, type PoolTrack, type PoolWeather,
+} from './matchmaking-model';
+
+export type PoolSection = 'cars' | 'weather' | 'tracks';
+const offerOptions = [
+  { value: '2', label: '2 машины' },
+  { value: '3', label: '3 машины' },
+  { value: '4', label: '4 машины' },
+  { value: 'all', label: 'Все машины подпула трассы' },
+];
+
+/** Pool editor of the matchmaking configurator: common car pool, weather variants and tracks with their subpools. */
+export function PoolFields({ section, value, onChange, disabled, catalog, onCatalogError, onSectionChange }: {
+  section: PoolSection;
+  onSectionChange(section: PoolSection): void;
   value: Pools;
   onChange(value: Pools): void;
   disabled: boolean;
-  section?: string;
+  catalog: PoolCatalog;
+  onCatalogError(message: string): void;
 }) {
-  const [expandedTrack, setExpandedTrack] = useState<string | false>(false);
-  const [expandedWeather, setExpandedWeather] = useState<string | false>(false);
-  const [catalog, setCatalog] = useState<Item[][]>([[], [], [], []]),
-    [error, setError] = useState('');
-  useEffect(() => {
-    let active = true,
-      revision = 0;
-    const load = async () => {
-      const request = ++revision;
-      try {
-        const rows = await Promise.all(
-          ['cars', 'tracks', 'weather-presets', 'car-sets'].map((path) =>
-            apiFetch<Item[]>(`/games/assetto_corsa/${path}`, {}, 'none'),
-          ),
-        );
-        if (active && request === revision) {
-          setCatalog(rows);
-          setError('');
-        }
-      } catch (e) {
-        if (active && request === revision) setError(String(e));
-      }
-    };
-    void load();
-    const off = subscribeAdminRefresh(['catalog'], load);
-    return () => {
-      active = false;
-      off();
-    };
-  }, []);
-  const [cars, tracks, weather, sets] = catalog;
+  const [trackKey, setTrackKey] = useState<string | null>(null);
+  const [weatherKey, setWeatherKey] = useState<string | null>(null);
   const patch = (next: Partial<Pools>) => onChange({ ...value, ...next });
-  const updateTrack = (index: number, next: Partial<Pools['tracks'][number]>) =>
-    patch({ tracks: value.tracks.map((t, i) => (i === index ? { ...t, ...next } : t)) });
-  const updateWeather = (index: number, next: Partial<Pools['weather'][number]>) =>
-    patch({ weather: value.weather.map((w, i) => (i === index ? { ...w, ...next } : w)) });
-  const trackProbability = (track: Pools['tracks'][number]) =>
-    track.enabled
-      ? selectionProbability(
-          track.weight,
-          value.tracks.filter((t) => t.enabled).map((t) => t.weight),
-        )
-      : 0;
-  const weatherProbability = (track: Pools['tracks'][number], key: string) => {
-    const allowed = value.weather.filter((w) => w.enabled && track.weatherKeys.includes(w.key));
-    return selectionProbability(
-      allowed.find((w) => w.key === key)?.weight ?? 0,
-      allowed.map((w) => w.weight),
-    );
-  };
-  return (
-    <Stack spacing={3}>
-      {error && <Alert severity="error">Не удалось загрузить каталог: {error}</Alert>}
-      <Stack
-        spacing={2}
-        role="tabpanel"
-        id="editor-panel-cars"
-        aria-labelledby="editor-tab-cars"
-        sx={{ display: section === 'cars' ? 'flex' : 'none' }}
-      >
-        <FieldGroup title="Общий пул машин">
-          <Autocomplete
-            size="small"
-            options={sets}
-            disabled={disabled}
-            value={sets.find((s) => s.code === value.carSetCode) ?? null}
-            getOptionLabel={(item) => item.title}
-            isOptionEqualToValue={(a, b) => a.code === b.code}
-            onChange={(_, set) => {
-              const ids = set?.metadata?.carIds ?? [];
-              const codes = ids
-                .map((id) => cars.find((c) => c.id === id || c.code === id)?.code)
-                .filter((id): id is string => !!id);
-              if (set && codes.length !== ids.length) {
-                setError('Часть машин набора недоступна');
-                return;
-              }
-              setError('');
-              onChange(changeCommonCars(value, set ? codes : value.carIds, set?.code));
-            }}
-            renderInput={(params) => <TextField {...params} label="Класс / набор машин" />}
-          />
-          <TextField
-            size="small"
-            select
-            label="Машин на выбор обоим пилотам"
-            value={value.offerCount}
-            disabled={disabled}
-            onChange={(e) =>
-              patch({
-                offerCount:
-                  e.target.value === 'all' ? 'all' : (Number(e.target.value) as 2 | 3 | 4),
-              })
-            }
-          >
-            {[2, 3, 4, 'all'].map((n) => (
-              <MenuItem key={n} value={n}>
-                {n === 'all' ? 'Все машины трассы' : n}
-              </MenuItem>
-            ))}
-          </TextField>
+  const updateTrack = (key: string, next: Partial<PoolTrack>) => patch({ tracks: value.tracks.map((t) => (t.key === key ? { ...t, ...next } : t)) });
+  const updateWeather = (key: string, next: Partial<PoolWeather>) => patch({ weather: value.weather.map((w) => (w.key === key ? { ...w, ...next } : w)) });
+  const carTitle = (code: string) => catalog.cars.find((c) => c.code === code)?.title ?? `${code} (недоступна)`;
+
+  if (section === 'cars') {
+    return (
+      <>
+        <Panel shadow title="Общий пул машин">
+          <Notice>Задаёт доступные автомобили всей очереди. Для каждой трассы выбирается собственный подпул <strong>только из этих машин</strong>.</Notice>
           <CarPoolSelect
             label="Машины общего пула"
-            items={cars}
+            items={catalog.cars}
             value={value.carIds}
             disabled={disabled}
-            onChange={(ids) => onChange(changeCommonCars(value, ids))}
+            onChange={(ids) => onChange(changeCommonCars(value, ids, value.carSetCode))}
             helperText="Удалённые машины также исключаются из подпулов трасс."
           />
-          <Typography color="text.secondary">
-            Выбрано машин: {value.carIds.length}. Для каждой трассы можно ограничить этот список.
-          </Typography>
-        </FieldGroup>
-      </Stack>
-      <Stack
-        spacing={2}
-        role="tabpanel"
-        id="editor-panel-weather"
-        aria-labelledby="editor-tab-weather"
-        sx={{ display: section === 'weather' ? 'flex' : 'none' }}
-      >
-        <Typography color="text.secondary">
-          Вероятность погоды рассчитывается отдельно для каждой трассы, среди разрешённых ей
-          вариантов.
-        </Typography>
-        {!value.weather.length && (
-          <Typography>Добавьте первый погодный вариант, затем назначьте его трассам.</Typography>
+          <div className="lsr-mm-divider" />
+          <Fields>
+            <SelectField
+              label="Класс / набор машин"
+              help="Выбор набора заменяет общий пул машинами набора."
+              value={value.carSetCode ?? ''}
+              disabled={disabled}
+              options={[
+                { value: '', label: 'Без набора' },
+                ...(value.carSetCode && !catalog.sets.some((s) => s.code === value.carSetCode) ? [{ value: value.carSetCode, label: `${value.carSetCode} (недоступен)` }] : []),
+                ...catalog.sets.map((s) => ({ value: s.code, label: s.title })),
+              ]}
+              onChange={(e) => {
+                const set = catalog.sets.find((s) => s.code === e.target.value);
+                if (!set) {
+                  onChange(changeCommonCars(value, value.carIds, undefined));
+                  return;
+                }
+                const ids = set.metadata?.carIds ?? [];
+                const codes = ids.map((id) => catalog.cars.find((c) => c.id === id || c.code === id)?.code).filter((id): id is string => !!id);
+                if (codes.length !== ids.length) {
+                  onCatalogError('Часть машин набора недоступна');
+                  return;
+                }
+                onCatalogError('');
+                onChange(changeCommonCars(value, codes, set.code));
+              }}
+            />
+            <SelectField
+              label="Машин на выбор обоим пилотам"
+              value={String(value.offerCount)}
+              disabled={disabled}
+              options={offerOptions}
+              onChange={(e) => patch({ offerCount: e.target.value === 'all' ? 'all' : (Number(e.target.value) as 2 | 3 | 4) })}
+            />
+          </Fields>
+        </Panel>
+        <Panel shadow title="Подпулы по трассам" sub="Откройте строку, чтобы изменить подпул трассы." body={false}>
+          {value.tracks.length ? (
+            <Table variant="module" label="Подпулы по трассам">
+              <thead><tr><th>Трасса</th><th>Машин</th><th>Предложение</th><th>Состояние</th></tr></thead>
+              <tbody>
+                {value.tracks.map((t) => (
+                  <tr key={t.key} {...clickableRow(() => { setTrackKey(t.key); onSectionChange('tracks'); })} aria-label={`Открыть трассу ${t.title}`}>
+                    <td><div className="lsr-mm-cell-title">{t.title || 'Новая трасса'}</div><div className="lsr-minor">{layoutTitle(catalog.tracks, t.code, t.layoutCode)}{t.enabled ? '' : ' · выключена'}</div></td>
+                    <td className="lsr-num">{t.carIds.length}</td>
+                    <td>{value.offerCount === 'all' ? 'Все' : value.offerCount}</td>
+                    <td>{subpoolShort(value, t) ? <span className="lsr-mm-error">Не хватает машин</span> : 'Готово'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          ) : (
+            <EmptyState compact>Трассы ещё не добавлены.</EmptyState>
+          )}
+        </Panel>
+      </>
+    );
+  }
+
+  if (section === 'weather') {
+    const w = value.weather.find((x) => x.key === weatherKey) ?? value.weather[0];
+    return (
+      <div className="lsr-split">
+        <Panel shadow title="Погодные варианты">
+          {value.weather.length ? (
+            <div className="lsr-mm-stack">
+              {value.weather.map((x) => (
+                <button key={x.key} type="button" aria-pressed={x.key === w?.key} className={`lsr-mm-entry${x.key === w?.key ? ' is-active' : ''}`} onClick={() => setWeatherKey(x.key)}>
+                  <strong>{x.title || 'Новая погода'}</strong>
+                  <small>{x.enabled ? 'Включена' : 'Выключена'} · Вес {x.weight} · {value.tracks.filter((t) => t.weatherKeys.includes(x.key)).length} трасс</small>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="lsr-muted lsr-mm-none">Добавьте первый погодный вариант, затем назначьте его трассам.</p>
+          )}
+          <div className="lsr-form-actions">
+            <Button
+              disabled={disabled}
+              onClick={() => {
+                const preset = catalog.weather[0], key = crypto.randomUUID();
+                patch({
+                  weather: [...value.weather, {
+                    key, title: preset?.title ?? 'Погода', enabled: true, weight: 10, codes: preset ? [preset.code] : [],
+                    weather: { mode: 'FIXED', presetCode: String(preset?.metadata?.graphics ?? preset?.code ?? ''), ambientTemperature: 22, roadTemperature: 30, ambientVariation: 2, roadVariation: 3 },
+                  }],
+                });
+                setWeatherKey(key);
+              }}
+            >
+              ＋ Добавить погоду
+            </Button>
+          </div>
+        </Panel>
+        {w ? (
+          <Panel shadow title="Условия погоды" sub={w.title || 'Новая погода'}>
+            <Fields>
+              <TextField label="Название" value={w.title} disabled={disabled} onChange={(e) => updateWeather(w.key, { title: e.target.value })} />
+              <TextField
+                type="number"
+                label="Вес выбора"
+                help="Относительный вес: 20 выбирается вдвое чаще, чем 10. Вероятность считается внутри списка погоды каждой трассы."
+                value={w.weight}
+                disabled={disabled}
+                onChange={(e) => updateWeather(w.key, { weight: Number(e.target.value) })}
+              />
+            </Fields>
+            <div className="lsr-mm-inline">
+              <Checkbox label="Вариант включён" checked={w.enabled} disabled={disabled} onChange={(enabled) => updateWeather(w.key, { enabled })} />
+              <Button
+                variant="danger"
+                disabled={disabled}
+                onClick={() => {
+                  patch({ weather: value.weather.filter((x) => x.key !== w.key), tracks: value.tracks.map((t) => ({ ...t, weatherKeys: t.weatherKeys.filter((key) => key !== w.key) })) });
+                  setWeatherKey(null);
+                }}
+              >
+                Удалить вариант
+              </Button>
+            </div>
+            <div className="lsr-mm-divider" />
+            <h3 className="lsr-mm-heading">Параметры погоды</h3>
+            <WeatherFields
+              value={w.weather}
+              catalogCodes={w.codes}
+              items={catalog.weather}
+              disabled={disabled}
+              allowRandom={false}
+              onChange={(next, selectedCodes) => {
+                const codes = next.mode === 'MANUAL' ? next.slots.map((s) => s.presetCode) : next.mode === 'FIXED' ? [next.presetCode] : next.presetCodes;
+                updateWeather(w.key, { weather: next, codes: selectedCodes ?? [...new Set(codes)] });
+              }}
+            />
+          </Panel>
+        ) : (
+          <Panel shadow title="Условия погоды"><EmptyState compact>Добавьте погодный вариант.</EmptyState></Panel>
         )}
-        {value.weather.map((w, index) => (
-          <Accordion
-            key={w.key}
-            expanded={expandedWeather === w.key}
-            onChange={(_, open) => setExpandedWeather(open ? w.key : false)}
-            disableGutters
-            elevation={0}
-            sx={{ borderBottom: 1, borderColor: 'divider', '&:before': { display: 'none' } }}
-          >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Stack>
-                <Typography fontWeight={600}>
-                  {w.title || 'Новая погода'} · {w.enabled ? 'Включена' : 'Выключена'}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {w.weather.mode === 'FIXED'
-                    ? 'Постоянная'
-                    : w.weather.mode === 'MANUAL'
-                      ? 'Погодные слоты'
-                      : 'Случайная'}{' '}
-                  · Частота выбора: {w.weight}
-                </Typography>
-              </Stack>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Stack spacing={2}>
-                <FieldGroup title="Погодный вариант">
-                  <TextField
-                    size="small"
-                    label={`Название погоды ${index + 1}`}
-                    value={w.title}
-                    disabled={disabled}
-                    onChange={(e) => updateWeather(index, { title: e.target.value })}
-                  />
-                  <TextField
-                    size="small"
-                    type="number"
-                    label="Частота выбора погоды"
-                    helperText="Относительный вес: 20 выбирается вдвое чаще, чем 10."
-                    value={w.weight}
-                    disabled={disabled}
-                    onChange={(e) => updateWeather(index, { weight: Number(e.target.value) })}
-                  />
-                  <FormControlLabel
-                    label="Погода включена"
-                    control={
-                      <Checkbox
-                        checked={w.enabled}
-                        disabled={disabled}
-                        onChange={(e) => updateWeather(index, { enabled: e.target.checked })}
-                      />
-                    }
-                  />
-                </FieldGroup>
-                <WeatherFields
-                  value={w.weather}
-                  catalogCodes={w.codes}
-                  items={weather}
-                  disabled={disabled}
-                  allowRandom={false}
-                  onChange={(next, selectedCodes) => {
-                    const codes =
-                      next.mode === 'MANUAL'
-                        ? next.slots.map((s) => s.presetCode)
-                        : next.mode === 'FIXED'
-                          ? [next.presetCode]
-                          : next.presetCodes;
-                    updateWeather(index, {
-                      weather: next,
-                      codes: selectedCodes ?? [...new Set(codes)],
-                    });
-                  }}
-                />
-                <Button
-                  color="error"
-                  sx={{ alignSelf: 'flex-start' }}
-                  disabled={disabled}
-                  onClick={() =>
-                    patch({
-                      weather: value.weather.filter((_, i) => i !== index),
-                      tracks: value.tracks.map((t) => ({
-                        ...t,
-                        weatherKeys: t.weatherKeys.filter((key) => key !== w.key),
-                      })),
-                    })
-                  }
-                >
-                  Удалить погоду
-                </Button>
-              </Stack>
-            </AccordionDetails>
-          </Accordion>
-        ))}
-        <Button
-          variant="outlined"
-          sx={{ alignSelf: 'flex-start' }}
-          disabled={disabled}
-          onClick={() => {
-            const preset = weather[0],
-              key = crypto.randomUUID();
-            patch({
-              weather: [
-                ...value.weather,
-                {
-                  key,
-                  title: preset?.title ?? 'Погода',
-                  enabled: true,
-                  weight: 10,
-                  codes: preset ? [preset.code] : [],
-                  weather: {
-                    mode: 'FIXED',
-                    presetCode: String(preset?.metadata?.graphics ?? preset?.code ?? ''),
-                    ambientTemperature: 22,
-                    roadTemperature: 30,
-                    ambientVariation: 2,
-                    roadVariation: 3,
-                  },
-                },
-              ],
-            });
-            setExpandedWeather(key);
-          }}
-        >
-          Добавить погоду
-        </Button>
-      </Stack>
-      <Stack
-        spacing={2}
-        role="tabpanel"
-        id="editor-panel-tracks"
-        aria-labelledby="editor-tab-tracks"
-        sx={{ display: section === 'tracks' ? 'flex' : 'none' }}
-      >
-        <Typography color="text.secondary">
-          Сначала выбирается трасса, затем один из разрешённых погодных вариантов. Раскройте строку
-          для настройки.
-        </Typography>
-        {!value.tracks.length && (
-          <Typography>Добавьте трассу и выберите доступные для неё машины и погоду.</Typography>
-        )}
-        {value.tracks.map((t, index) => (
-          <Accordion
-            key={t.key}
-            expanded={expandedTrack === t.key}
-            onChange={(_, open) => setExpandedTrack(open ? t.key : false)}
-            disableGutters
-            elevation={0}
-            sx={{ borderBottom: 1, borderColor: 'divider', '&:before': { display: 'none' } }}
-          >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Stack>
-                <Typography fontWeight={600}>
-                  {t.title || 'Новая трасса'}
-                  {t.layoutCode ? ` · ${t.layoutCode}` : ''} ·{' '}
-                  {t.enabled ? 'Включена' : 'Выключена'}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {t.durationMinutes} мин · Машин: {t.carIds.length} · Погодных вариантов:{' '}
-                  {t.weatherKeys.length} · Вероятность: {trackProbability(t)}%
-                </Typography>
-              </Stack>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Stack spacing={2}>
-                <FieldGroup title="Трасса и конфигурация">
-                  <TrackSelectionFields
-                    items={tracks}
-                    value={{ code: t.code, layoutCode: t.layoutCode }}
-                    disabled={disabled}
-                    onChange={(next) =>
-                      updateTrack(index, {
-                        ...next,
-                        title: tracks.find((row) => row.code === next.code)?.title ?? next.code,
-                      })
-                    }
-                  />
-                </FieldGroup>
-                <FieldGroup title="Условия выбора">
-                  <TextField
-                    size="small"
-                    type="number"
-                    label="Частота выбора трассы"
-                    value={t.weight}
-                    helperText={`Вероятность среди включённых трасс: ${trackProbability(t)}%`}
-                    disabled={disabled}
-                    onChange={(e) => updateTrack(index, { weight: Number(e.target.value) })}
-                  />
-                  <TextField
-                    size="small"
-                    type="number"
-                    label="Длительность на этой трассе, минут"
-                    value={t.durationMinutes}
-                    disabled={disabled}
-                    onChange={(e) =>
-                      updateTrack(index, { durationMinutes: Number(e.target.value) })
-                    }
-                  />
-                  <CarPoolSelect
-                    label="Подпул машин трассы"
-                    items={cars.filter((c) => value.carIds.includes(c.code))}
-                    value={t.carIds}
-                    disabled={disabled}
-                    onChange={(carIds) => updateTrack(index, { carIds })}
-                    error={
-                      !t.carIds.length ||
-                      (value.offerCount !== 'all' && t.carIds.length < value.offerCount)
-                    }
-                    helperText={
-                      value.offerCount === 'all'
-                        ? 'Пилотам будут доступны все выбранные машины'
-                        : `Выбрано ${t.carIds.length}; необходимо не менее ${value.offerCount}.`
-                    }
-                  />
-                  <CarPoolSelect
-                    itemType="weather"
-                    label="Допустимая погода трассы"
-                    items={value.weather.map((w) => ({
-                      code: w.key,
-                      title: w.title + (w.enabled ? '' : ' (выключена)'),
-                    }))}
-                    value={t.weatherKeys}
-                    disabled={disabled}
-                    onChange={(weatherKeys) => updateTrack(index, { weatherKeys })}
-                    helperText={
-                      value.weather
-                        .filter((w) => w.enabled && t.weatherKeys.includes(w.key))
-                        .map((w) => `${w.title}: ${weatherProbability(t, w.key)}%`)
-                        .join(' · ') || 'Выберите хотя бы один включённый вариант.'
-                    }
-                  />
-                  <FormControlLabel
-                    label="Трасса включена"
-                    control={
-                      <Checkbox
-                        checked={t.enabled}
-                        disabled={disabled}
-                        onChange={(e) => updateTrack(index, { enabled: e.target.checked })}
-                      />
-                    }
-                  />
-                </FieldGroup>
-                <Button
-                  color="error"
-                  sx={{ alignSelf: 'flex-start' }}
-                  disabled={disabled}
-                  onClick={() => patch({ tracks: value.tracks.filter((_, i) => i !== index) })}
-                >
-                  Удалить трассу
-                </Button>
-              </Stack>
-            </AccordionDetails>
-          </Accordion>
-        ))}
-        <Button
-          variant="outlined"
-          sx={{ alignSelf: 'flex-start' }}
-          disabled={disabled}
-          onClick={() => {
-            const key = crypto.randomUUID();
-            patch({
-              tracks: [
-                ...value.tracks,
-                {
-                  key,
-                  title: 'Трасса',
-                  code: '',
-                  layoutCode: null,
-                  enabled: true,
-                  weight: 10,
-                  durationMinutes: 6,
-                  carIds: [...value.carIds],
-                  weatherKeys: value.weather.filter((w) => w.enabled).map((w) => w.key),
-                },
-              ],
-            });
-            setExpandedTrack(key);
-          }}
-        >
-          Добавить трассу
-        </Button>
-      </Stack>
-      <Stack spacing={2} sx={{ display: section === 'rules' ? 'flex' : 'none' }}>
-        <FieldGroup title="Допуск и готовность">
-          <TextField
-            size="small"
-            type="number"
-            label="Время на выбор и готовность, секунд"
-            helperText="От 120 до 3600 секунд. Повторное подтверждение не продлевает срок."
-            value={value.readyTimeoutSeconds}
-            disabled={disabled}
-            onChange={(e) => patch({ readyTimeoutSeconds: Number(e.target.value) })}
-          />
-          <TextField
-            size="small"
-            select
-            label="Минимальная лицензия PR"
-            value={value.minimumPilotLicense}
-            disabled={disabled}
-            onChange={(e) =>
-              patch({ minimumPilotLicense: e.target.value as Pools['minimumPilotLicense'] })
-            }
-          >
-            {['D', 'C', 'B', 'A'].map((v) => (
-              <MenuItem key={v} value={v}>
-                {v}
-              </MenuItem>
+      </div>
+    );
+  }
+
+  const t = value.tracks.find((x) => x.key === trackKey) ?? value.tracks[0];
+  const pickable = value.carIds;
+  const enabledAllowed = t ? value.weather.filter((w) => w.enabled && t.weatherKeys.includes(w.key)) : [];
+  return (
+    <div className="lsr-split">
+      <Panel shadow title="Трассы в ротации">
+        {value.tracks.length ? (
+          <div className="lsr-mm-stack">
+            {value.tracks.map((x) => (
+              <button key={x.key} type="button" aria-pressed={x.key === t?.key} className={`lsr-mm-entry${x.key === t?.key ? ' is-active' : ''}`} onClick={() => setTrackKey(x.key)}>
+                <strong>{x.title || 'Новая трасса'}{x.enabled ? '' : ' · выключена'}</strong>
+                <small>
+                  {layoutTitle(catalog.tracks, x.code, x.layoutCode)} · {x.durationMinutes} мин · Вероятность {trackProbability(value, x)}% · Машин {x.carIds.length}
+                  {subpoolShort(value, x) && <span className="lsr-mm-error"> · не хватает машин</span>}
+                </small>
+              </button>
             ))}
-          </TextField>
-          <TextField
-            size="small"
-            select
-            label="Правило ничьей"
-            value={value.tiePolicy}
+          </div>
+        ) : (
+          <p className="lsr-muted lsr-mm-none">Добавьте трассу и выберите доступные для неё машины и погоду.</p>
+        )}
+        <div className="lsr-form-actions">
+          <Button
             disabled={disabled}
-            onChange={(e) => patch({ tiePolicy: e.target.value as Pools['tiePolicy'] })}
+            onClick={() => {
+              const key = crypto.randomUUID();
+              patch({ tracks: [...value.tracks, { key, title: 'Трасса', code: '', layoutCode: null, enabled: true, weight: 10, durationMinutes: 6, carIds: [...value.carIds], weatherKeys: value.weather.filter((w) => w.enabled).map((w) => w.key) }] });
+              setTrackKey(key);
+            }}
           >
-            <MenuItem value="double_loss">Поражение обоим</MenuItem>
-            <MenuItem value="omt">Перезаезды OMT, затем поражение обоим</MenuItem>
-          </TextField>
-        </FieldGroup>
-      </Stack>
-    </Stack>
+            ＋ Добавить трассу
+          </Button>
+        </div>
+      </Panel>
+      {t ? (
+        <Panel shadow title="Настройки выбранной трассы" sub={`${t.title || 'Новая трасса'} · ${layoutTitle(catalog.tracks, t.code, t.layoutCode)}`}>
+          <Fields>
+            <TrackSelectionFields
+              items={catalog.tracks}
+              value={{ code: t.code, layoutCode: t.layoutCode }}
+              disabled={disabled}
+              onChange={(next) => updateTrack(t.key, { ...next, title: catalog.tracks.find((row) => row.code === next.code)?.title ?? next.code })}
+            />
+            <TextField
+              type="number"
+              label="Частота выпадения (вес)"
+              help={`Сейчас вероятность ${trackProbability(value, t)}% среди включённых трасс`}
+              value={t.weight}
+              disabled={disabled}
+              onChange={(e) => updateTrack(t.key, { weight: Number(e.target.value) })}
+            />
+            <TextField type="number" label="Длительность заезда, мин" value={t.durationMinutes} disabled={disabled} onChange={(e) => updateTrack(t.key, { durationMinutes: Number(e.target.value) })} />
+          </Fields>
+          <div className="lsr-mm-inline">
+            <Checkbox label="Трасса включена" checked={t.enabled} disabled={disabled} onChange={(enabled) => updateTrack(t.key, { enabled })} />
+            <Button variant="danger" disabled={disabled} onClick={() => { patch({ tracks: value.tracks.filter((x) => x.key !== t.key) }); setTrackKey(null); }}>Удалить трассу</Button>
+          </div>
+          <div className="lsr-mm-divider" />
+          <div className="lsr-mm-group">
+            <h3 className="lsr-mm-heading">Подпул машин трассы · {t.carIds.length}</h3>
+            <div className="lsr-muted">Только машины из общего пула, которые могут выпасть на этой трассе.</div>
+            {pickable.length || t.carIds.length ? (
+              <div className="lsr-mm-chipset" role="group" aria-label="Подпул машин трассы">
+                {[...pickable, ...t.carIds.filter((id) => !pickable.includes(id))].map((code) => {
+                  const picked = t.carIds.includes(code);
+                  return (
+                    <button key={code} type="button" className={`lsr-mm-chip${picked ? ' is-picked' : ''}`} aria-pressed={picked} disabled={disabled} title={code}
+                      onClick={() => updateTrack(t.key, { carIds: picked ? t.carIds.filter((id) => id !== code) : [...t.carIds, code] })}>
+                      {picked ? '✓ ' : ''}{carTitle(code)}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="lsr-mm-error">Общий пул машин пуст — сначала добавьте машины во вкладке «Пул машин».</div>
+            )}
+            <small className={subpoolShort(value, t) ? 'lsr-mm-error' : 'lsr-help'}>
+              {value.offerCount === 'all' ? 'Пилотам будут доступны все выбранные машины.' : `Выбрано ${t.carIds.length}; необходимо не менее ${value.offerCount}.`}
+            </small>
+          </div>
+          <div className="lsr-mm-divider" />
+          <div className="lsr-mm-group">
+            <h3 className="lsr-mm-heading">Допустимая погода</h3>
+            <div className="lsr-muted">Отметьте варианты, доступные именно на этой трассе. Вероятности учитывают их веса.</div>
+            {value.weather.length ? (
+              <div className="lsr-mm-chipset" role="group" aria-label="Допустимая погода трассы">
+                {value.weather.map((w) => {
+                  const picked = t.weatherKeys.includes(w.key);
+                  return (
+                    <button key={w.key} type="button" className={`lsr-mm-chip${picked ? ' is-picked' : ''}`} aria-pressed={picked} disabled={disabled}
+                      onClick={() => updateTrack(t.key, { weatherKeys: picked ? t.weatherKeys.filter((key) => key !== w.key) : [...t.weatherKeys, w.key] })}>
+                      {picked ? '✓ ' : ''}{w.title || 'Новая погода'}{!w.enabled ? ' · выкл.' : picked ? ` · ${weatherProbability(value, t, w.key)}%` : ''}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="lsr-mm-error">Погодные варианты не созданы — добавьте их во вкладке «Погода».</div>
+            )}
+            {!enabledAllowed.length && <small className="lsr-mm-error">Выберите хотя бы один включённый вариант.</small>}
+          </div>
+        </Panel>
+      ) : (
+        <Panel shadow title="Настройки выбранной трассы"><EmptyState compact>Добавьте трассу в ротацию.</EmptyState></Panel>
+      )}
+    </div>
   );
 }

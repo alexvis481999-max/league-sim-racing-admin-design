@@ -1,4 +1,4 @@
-import type { Pools } from './PoolFields';
+import type { Pools } from './matchmaking-model';
 
 /** Early, human-readable feedback; catalog availability is still validated by the server. */
 export function poolErrors(p: Pools | undefined): string[] {

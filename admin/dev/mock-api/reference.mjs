@@ -23,7 +23,7 @@ export const CARS = [
   { code: 'toyota_ae86', title: 'Toyota AE86' },
   { code: 'mazda_rx7_fd', title: 'Mazda RX-7 FD' },
 ];
-export const CAR_SETS = [{ code: 'gt3_2026', title: 'GT3 · сезон 2026', metadata: { carCodes: ['bmw_m4_gt3', 'porsche_911_gt3_r', 'ferrari_488_gt3', 'audi_r8_lms'] } }];
+export const CAR_SETS = [{ code: 'gt3_2026', title: 'GT3 · сезон 2026', metadata: { carIds: ['bmw_m4_gt3', 'porsche_911_gt3_r', 'ferrari_488_gt3', 'audi_r8_lms'] } }];
 export const WEATHER = [
   { code: '3_clear', title: 'Ясно' },
   { code: '4_mid_clear', title: 'Переменная облачность' },

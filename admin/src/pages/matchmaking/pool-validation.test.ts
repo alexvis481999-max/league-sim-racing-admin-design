@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { newPools, changeCommonCars } from './PoolFields';
+import { newPools, changeCommonCars } from './matchmaking-model';
 import { poolErrors } from './pool-validation';
 function valid() {
   const p = newPools(); p.carIds = ['a','b','c','d'];
