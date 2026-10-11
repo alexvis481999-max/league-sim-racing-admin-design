@@ -18,7 +18,8 @@ import { CurrentUsersPage as UsersPage } from '../pages/users/CurrentUsersPage';
 import { logoutSessions } from '../shared/api';
 import { hasAny } from '../shared/format';
 import type { AdminAccess, ModuleDefinition } from '../shared/types';
-import { ShellContext, Topbar, type PageChrome } from '../ui/v16';
+import { ShellContext, type PageChrome } from '../ui/v16';
+import { Topbar } from './Topbar';
 
 const roleLabels: Record<string, string> = {
   platform_owner: 'Владелец платформы',

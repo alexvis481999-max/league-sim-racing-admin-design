@@ -3,8 +3,8 @@ import {
   AsyncView, Button, EmptyState, InfoTiles, Meta, MetaGrid, Notice, PageHeader, Panel, PillButtons, SearchInput, StatusBadge, Table, TextLink,
   clickableRow, count, longDay, shortDateTime, shortWeekday, usePageChrome, weekday,
 } from '../../../../ui/v16';
-import { useWorkspaceData } from '../../current/workspace-data';
-import { workspacePath } from '../../current/workspace-ui';
+import { useWorkspaceData } from '../data';
+import { workspacePath } from '../data';
 import { useWorkspace, useWorkspaceNav } from '../context';
 import { blocksByDay, groupProgram, isLive, isUncertain, isWaiting, type ProgramBlock, type ProgramGroup } from '../program';
 import type { ConditionsResponse } from '../common/conditions';

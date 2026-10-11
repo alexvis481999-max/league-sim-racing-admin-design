@@ -5,8 +5,8 @@ import {
   ActionButton, AsyncView, Button, DateGrid, Dialog, EmptyState, Notice, PageHeader, Panel, PillButtons, StatusBadge, Table, Tabs, TextLink, Timeline,
   count, shortDateTime, usePageChrome,
 } from '../../../../ui/v16';
-import { useWorkspaceData } from '../../current/workspace-data';
-import { workspacePath } from '../../current/workspace-ui';
+import { useWorkspaceData } from '../data';
+import { workspacePath } from '../data';
 import { action, useWorkspace, useWorkspaceNav } from '../context';
 import { groupProgram } from '../program';
 import { ConditionsPanel, type ConditionsResponse } from '../common/conditions';
@@ -115,7 +115,27 @@ function RaceConduct({ block, conditions }: { block: ScheduleBlock; conditions: 
           )}
         </Panel>
       </div>
-      <ConditionsPanel resource={conditions} heading={block.type === 'PRACTICE' ? 'Условия практики' : 'Условия гонки'} />
+      {block.type === 'TOURNAMENT' && <RoundMatches block={block} />}
+      <ConditionsPanel resource={conditions} heading={block.type === 'PRACTICE' ? 'Условия практики' : block.type === 'TOURNAMENT' ? 'Условия раунда' : block.type === 'TIME_ATTACK' ? 'Условия попыток' : 'Условия гонки'} />
+    </div>
+  );
+}
+
+function RoundMatches({ block }: { block: ScheduleBlock }) {
+  const { eventId } = useWorkspace();
+  if (!block.progress.length) return <Panel title="Пары раунда"><div className="lsr-mutedline">Пары сформируются при запуске раунда.</div></Panel>;
+  return (
+    <div className="lsr-stack">
+      {block.progress.map((m) => (
+        <Panel key={m.key} title={`${m.title} · ${m.participants.map((p) => p.displayName).join(' — ') || 'соперники не определены'}`} actions={<StatusBadge status={m.displayStatus} small />} body={!m.children.length}>
+          {m.children.length ? (
+            <Table label={m.title}>
+              <thead><tr><th>Заезд</th><th>Участники заезда</th><th>Состояние</th><th>Сессия</th></tr></thead>
+              <tbody>{m.children.map((h) => <tr key={h.key}><td className="lsr-primary">{h.title}</td><td>{h.participants.map((p) => p.displayName).join(', ') || '—'}</td><td><StatusBadge status={h.displayStatus} small /></td><td>{h.runtimeSessionId ? <TextLink size="sm" to={`/runtime?sessionId=${h.runtimeSessionId}&eventId=${eventId}`}>№{h.runtimeSessionId} ↗</TextLink> : '—'}</td></tr>)}</tbody>
+            </Table>
+          ) : <div className="lsr-mutedline">{m.displayStatus.reason?.message ?? 'Заезды пары ещё не проводились.'}</div>}
+        </Panel>
+      ))}
     </div>
   );
 }

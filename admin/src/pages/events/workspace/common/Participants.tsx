@@ -4,8 +4,8 @@ import {
   ActionButton, AsyncView, Button, Dialog, EmptyState, LoadMore, Panel, PillButtons, StatusBadge, Table, TextArea, TextLink, Timeline,
   clickableRow, recordTone, shortDateTime, type Tone,
 } from '../../../../ui/v16';
-import { useWorkspaceData } from '../../current/workspace-data';
-import { workspacePath, type PageData } from '../../current/workspace-ui';
+import { useWorkspaceData } from '../data';
+import { workspacePath, type PageData } from '../data';
 import { RosterFields } from '../../current/RosterFields';
 import type { Action } from '../../current/event-api';
 import type { DisplayStatus } from '../../../../../../shared/event-status';

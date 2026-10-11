@@ -45,7 +45,7 @@ export function SettingsTab({ active, tabs }: { active: boolean; tabs?: ReactNod
       {error ? <ErrorState error={error.message} status={error.status} onRetry={retry} />
         : !form ? <Panel><LoadingBlock rows={6} /></Panel>
         : (
-          <Panel title="Описание" sub="Совместимая правка описания события">
+          <Panel title="Описание события" sub="Совместимая правка описания">
             <TextArea label="Описание" rows={8} value={form.description} disabled={!descriptionEditable || blocked} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             <div className="lsr-form-actions">
               <Button onClick={() => nav.section('overview')}>Отмена</Button>

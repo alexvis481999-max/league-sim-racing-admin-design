@@ -1,6 +1,7 @@
 // Dev-only synthetic events. Projections mirror api-reference/workspace-schedule (event-workspace.service.ts).
 // Nothing here is real data; the generator only exists to render admin screens without a backend.
 import { CARS, PILOTS, TRACKS, carItem, trackItem, weatherItem } from './reference.mjs';
+import { championshipBlocks, practiceBlocks, singleBlocks, timeAttackBlocks, tournamentBlocks } from './formats.mjs';
 
 export const NOW = '2026-10-09T10:05:00.000Z'; // 13:05 Europe/Moscow
 const MSK = 3 * 3600_000;
@@ -84,6 +85,16 @@ const winterSettings = { ...structuredClone(weeklySettings), event: { ...weeklyS
 
 function blockDisplay(b) {
   const e = b.execution;
+  if (b.type === 'TIME_ATTACK') {
+    if (e?.status === 'COMPLETED') return status('COMPLETED', 'Завершён', e.finishedAt);
+    if (Date.parse(NOW) < b.start) return status('SCHEDULED', 'Окно ещё не открыто');
+    if (Date.parse(NOW) >= b.end) return status('FINISHING', 'Окно закрыто · завершение', iso(b.end));
+    return status('OPEN', 'Окно попыток открыто', iso(b.start));
+  }
+  if (b.type === 'PRACTICE' && e?.status === 'COMPLETED') return status('COMPLETED', 'Практика завершена', e.finishedAt);
+  if (b.type === 'PRACTICE' && e?.status === 'RUNNING') return status('OPEN', 'Практика открыта', e.startedAt);
+  if (b.type === 'PRACTICE' && !e) return status('SCHEDULED', 'Практика запланирована');
+  if (b.type === 'TOURNAMENT' && e?.status === 'RUNNING') return status('RUNNING', 'Заезды идут', e.startedAt);
   if (e?.status === 'COMPLETED') return status('COMPLETED', 'Завершён', e.finishedAt);
   if (e?.status === 'FAILED') return status('FAILED', 'Не состоялся', e.finishedAt, { code: e.reason.code, message: 'Техническая ошибка игрового сервера.' });
   if (e?.status === 'RUNNING') {
@@ -94,7 +105,7 @@ function blockDisplay(b) {
 }
 const pilotsFor = (b, split) => {
   const size = split === 1 ? 8 : split === 2 ? 7 : 6;
-  return Array.from({ length: size }, (_, j) => PILOTS[(j + (split - 1) * 6 + b.k) % PILOTS.length]);
+  return Array.from({ length: size }, (_, j) => PILOTS[(j + (split - 1) * 6 + (b.k ?? b.seed ?? 0)) % PILOTS.length]);
 };
 function sessionsFor(b) {
   if (!b.execution) return [];
@@ -115,32 +126,40 @@ function sessionsFor(b) {
   });
 }
 function progressFor(b) {
+  if (b.matches) {
+    return b.matches.map((m) => ({ key: m.key, title: m.title, status: m.status, runtimeSessionId: m.runtimeSessionId, participants: m.participants,
+      displayStatus: m.status === 'COMPLETED' ? status('COMPLETED', 'Завершено', b.execution?.finishedAt) : m.status === 'RUNNING' ? status('DUEL', 'Дуэль', b.execution?.startedAt) : status('PENDING', 'Запланировано'),
+      children: m.children.map((h) => ({ ...h, displayStatus: status('FINISHED', 'Завершено') })) }));
+  }
+  if (b.type === 'TIME_ATTACK') return [];
   return sessionsFor(b).map((s, i) => ({
     key: `split-${i + 1}`, title: `Сплит ${i + 1}`, status: s.status === 'RUNNING' ? 'RACE_1' : s.status === 'FAILED' ? 'FAILED' : 'FINISHED',
     runtimeSessionId: s.id, children: [], participants: pilotsFor(b, i + 1),
     displayStatus: s.displayStatus.code === 'STOPPED' ? status('FINISHED', 'Завершено', s.stoppedAt) : s.displayStatus,
   }));
 }
+const hasResult = (b) => b.execution?.status === 'COMPLETED' && b.type !== 'PRACTICE';
 function scheduleBlock(b) {
   return {
-    id: b.id, key: b.key, title: b.title, type: 'RACE', status: b.execution?.status ?? 'PENDING', executionId: b.execution ? 'exec-' + b.id : null,
+    id: b.id, key: b.key, title: b.title, type: b.type ?? 'RACE', status: b.execution?.status ?? 'PENDING', executionId: b.execution ? 'exec-' + b.id : null,
     plannedStartsAt: iso(b.start), estimatedEndsAt: iso(b.end), startedAt: b.execution?.startedAt ?? null, finishedAt: b.execution?.finishedAt ?? null,
     actualParticipantIds: progressFor(b).flatMap((p) => p.participants.map((x) => x.participantId)),
-    displayStatus: blockDisplay(b), group: { key: `week-${b.w}`, title: `Неделя ${b.w}`, kind: 'WEEK' },
-    progress: progressFor(b), resultIds: b.execution?.status === 'COMPLETED' ? ['r' + b.id] : [], sessions: sessionsFor(b),
+    displayStatus: blockDisplay(b), group: b.w ? { key: `week-${b.w}`, title: `Неделя ${b.w}`, kind: 'WEEK' } : b.group ?? null,
+    progress: progressFor(b), resultIds: hasResult(b) ? ['r' + b.id] : [], sessions: b.type === 'TIME_ATTACK' ? [] : sessionsFor(b),
   };
 }
 
 /* ------------------------------------------------------- event records */
 const presentation = (subtitle) => ({ coverUrl: null, subtitle, cardAppearance: null });
+const planSettings = (title) => ({ event: { organizerId: '1', title, timezone: 'Europe/Moscow', gameCode: 'assetto_corsa', disciplineCode: 'circuit' }, authoring: { version: 2, editorVersion: 1 } });
 export const EVENTS = [
   { id: WEEKLY_ID, title: 'Weekly · Осенний сезон', description: '<p>Серия регулярных гонок на Assetto Corsa. Гонки каждые 30 минут, разные трассы по неделям.</p>', scenarioCode: 'weekly', scenarioTitle: 'Регулярные гонки', organizerId: '1', gameCode: 'assetto_corsa', disciplineCode: 'circuit', timezone: 'Europe/Moscow', startsAt: iso(WEEKLY_BLOCKS[0].start), endsAt: iso(WEEKLY_BLOCKS.at(-1).end), status: 'RUNNING', version: '42', presentation: presentation('Честные гонки и соревновательная атмосфера'), settings: weeklySettings, blocks: WEEKLY_BLOCKS },
   { id: '1040', title: 'Weekly · Зимний сезон', description: '<p>Четыре недели зимних гонок. Расписание и условия ещё можно менять.</p>', scenarioCode: 'weekly', scenarioTitle: 'Регулярные гонки', organizerId: '1', gameCode: 'assetto_corsa', disciplineCode: 'circuit', timezone: 'Europe/Moscow', startsAt: iso(WINTER_BLOCKS[0].start), endsAt: iso(WINTER_BLOCKS.at(-1).end), status: 'PUBLISHED', version: '7', presentation: presentation('Зимняя серия'), settings: winterSettings, blocks: WINTER_BLOCKS },
-  { id: '2041', title: 'LSR GT3 Championship', description: '<p>Восьмиэтапный чемпионат GT3 с квалификацией, зачётом и регистрацией.</p>', scenarioCode: 'championship', scenarioTitle: 'Чемпионат', organizerId: '1', gameCode: 'assetto_corsa', disciplineCode: 'circuit', timezone: 'Europe/Moscow', startsAt: '2026-09-25T15:00:00.000Z', endsAt: '2026-11-13T18:00:00.000Z', status: 'RUNNING', version: '17', presentation: presentation('Восемь этапов GT3'), blocks: [] },
-  { id: '3110', title: 'Friday GT Sprint', description: '<p>Одиночная гонка с квалификацией и сплитами.</p>', scenarioCode: 'circuit_single_race', scenarioTitle: 'Разовая гонка', organizerId: '1', gameCode: 'assetto_corsa', disciplineCode: 'circuit', timezone: 'Europe/Moscow', startsAt: '2026-10-16T15:00:00.000Z', endsAt: '2026-10-16T16:30:00.000Z', status: 'PUBLISHED', version: '5', presentation: presentation('Пятничный спринт'), blocks: [] },
-  { id: '4112', title: 'GT3 Open Practice', description: '<p>Практика с мониторингом сессий и подключений.</p>', scenarioCode: 'practice', scenarioTitle: 'Практика', organizerId: '1', gameCode: 'assetto_corsa', disciplineCode: 'circuit', timezone: 'Europe/Moscow', startsAt: '2026-10-10T07:00:00.000Z', endsAt: '2026-10-10T19:00:00.000Z', status: 'PUBLISHED', version: '3', presentation: presentation('Открытая практика'), blocks: [] },
-  { id: '5120', title: 'Imola Hotlap Challenge', description: '<p>Окно попыток и таблица лучших кругов.</p>', scenarioCode: 'time_attack', scenarioTitle: 'Тайм-аттак', organizerId: '1', gameCode: 'assetto_corsa', disciplineCode: 'circuit', timezone: 'Europe/Moscow', startsAt: '2026-09-28T09:00:00.000Z', endsAt: '2026-10-04T19:00:00.000Z', status: 'COMPLETED', version: '9', presentation: presentation('Лучший круг Имолы'), blocks: [] },
-  { id: '6140', title: 'Touge Masters · Cup', description: '<p>Турнирная сетка, дуэли, верхняя и нижняя сетки.</p>', scenarioCode: 'double_elimination_tournament', scenarioTitle: 'Турнир', organizerId: '1', gameCode: 'assetto_corsa', disciplineCode: 'touge', timezone: 'Europe/Moscow', startsAt: '2026-10-24T15:00:00.000Z', endsAt: '2026-10-24T19:00:00.000Z', status: 'PUBLISHED', version: '4', presentation: presentation('Двойное выбывание'), blocks: [] },
+  { id: '2041', title: 'LSR GT3 Championship', description: '<p>Восьмиэтапный чемпионат GT3 с квалификацией, зачётом и регистрацией.</p>', scenarioCode: 'championship', scenarioTitle: 'Чемпионат', organizerId: '1', gameCode: 'assetto_corsa', disciplineCode: 'circuit', timezone: 'Europe/Moscow', startsAt: '2026-09-25T15:00:00.000Z', endsAt: '2026-11-13T18:00:00.000Z', status: 'RUNNING', version: '17', presentation: presentation('Восемь этапов GT3'), settings: planSettings('plan'), blocks: championshipBlocks(Date.parse(NOW)) },
+  { id: '3110', title: 'Friday GT Sprint', description: '<p>Одиночная гонка с квалификацией и сплитами.</p>', scenarioCode: 'circuit_single_race', scenarioTitle: 'Разовая гонка', organizerId: '1', gameCode: 'assetto_corsa', disciplineCode: 'circuit', timezone: 'Europe/Moscow', startsAt: '2026-10-16T15:00:00.000Z', endsAt: '2026-10-16T16:30:00.000Z', status: 'PUBLISHED', version: '5', presentation: presentation('Пятничный спринт'), settings: planSettings('plan'), blocks: singleBlocks(Date.parse(NOW)) },
+  { id: '4112', title: 'GT3 Open Practice', description: '<p>Практика с мониторингом сессий и подключений.</p>', scenarioCode: 'practice', scenarioTitle: 'Практика', organizerId: '1', gameCode: 'assetto_corsa', disciplineCode: 'circuit', timezone: 'Europe/Moscow', startsAt: '2026-10-10T07:00:00.000Z', endsAt: '2026-10-10T19:00:00.000Z', status: 'PUBLISHED', version: '3', presentation: presentation('Открытая практика'), settings: planSettings('plan'), blocks: practiceBlocks(Date.parse(NOW)) },
+  { id: '5120', title: 'Imola Hotlap Challenge', description: '<p>Окно попыток и таблица лучших кругов.</p>', scenarioCode: 'time_attack', scenarioTitle: 'Тайм-аттак', organizerId: '1', gameCode: 'assetto_corsa', disciplineCode: 'circuit', timezone: 'Europe/Moscow', startsAt: '2026-09-28T09:00:00.000Z', endsAt: '2026-10-04T19:00:00.000Z', status: 'COMPLETED', version: '9', presentation: presentation('Лучший круг Имолы'), settings: planSettings('plan'), blocks: timeAttackBlocks(Date.parse(NOW)) },
+  { id: '6140', title: 'Touge Masters · Cup', description: '<p>Турнирная сетка, дуэли, верхняя и нижняя сетки.</p>', scenarioCode: 'double_elimination_tournament', scenarioTitle: 'Турнир', organizerId: '1', gameCode: 'assetto_corsa', disciplineCode: 'touge', timezone: 'Europe/Moscow', startsAt: '2026-10-09T08:00:00.000Z', endsAt: '2026-10-09T14:20:00.000Z', status: 'RUNNING', version: '4', presentation: presentation('Двойное выбывание'), settings: planSettings('plan'), blocks: tournamentBlocks(Date.parse(NOW)) },
   { id: '7001', title: 'Зимний кубок (отменён)', description: null, scenarioCode: 'circuit_single_race', scenarioTitle: 'Разовая гонка', organizerId: '1', gameCode: 'assetto_corsa', disciplineCode: 'circuit', timezone: 'Europe/Moscow', startsAt: '2026-10-02T15:00:00.000Z', endsAt: '2026-10-02T16:30:00.000Z', status: 'CANCELLED', version: '6', presentation: presentation(null), blocks: [] },
 ];
 export const DRAFTS = [
@@ -157,6 +176,7 @@ function eventStatusView(e) {
     const live = e.blocks.find((b) => b.execution?.status === 'RUNNING');
     return { ...status('RUNNING', 'Серия идёт'), currentStage: live ? { key: live.key, title: live.title } : null };
   }
+  if (!title && e.blocks.length === 1) return { ...blockDisplay(e.blocks[0]), currentStage: { key: e.blocks[0].key, title: e.blocks[0].title } };
   if (e.status === 'RUNNING') return { ...status('RUNNING', `${title ?? 'Событие'} идёт`), currentStage: null };
   return { ...status('SCHEDULED', title ? `${title}: запланировано` : 'Заезд запланирован'), currentStage: null };
 }
@@ -196,6 +216,7 @@ export function page(items, q, defaultLimit = 25) {
 
 /* ---------------------------------------------------------- workspace */
 const program = (e) => e.blocks.map((b) => {
+  void 0;
   const s = scheduleBlock(b);
   return { key: s.key, title: s.title, type: s.type, group: s.group, displayStatus: s.displayStatus, startsAt: s.plannedStartsAt, endsAt: s.estimatedEndsAt, startedAt: s.startedAt, finishedAt: s.finishedAt, track: trackItem(b.track)?.title ?? b.track, cars: ['BMW M4 GT3', 'Porsche 911 GT3 R'] };
 });
@@ -220,19 +241,19 @@ export function workspaceSummary(e) {
   };
 }
 function conditionsFor(e, b) {
-  const week = e.settings?.weekly?.weeks?.[b.w - 1];
+  const week = b.w ? e.settings?.weekly?.weeks?.[b.w - 1] : null;
   const weather = week?.weather.weather ?? fixedWeather('3_clear', 22, 30);
   const game = baseGame(b.track, week?.track.layoutCode ?? null, weather);
   const overrides = week?.raceOverrides ?? {};
   const t = TRACKS.find((x) => x.code === b.track);
   return {
-    key: b.key, title: b.title, type: 'RACE',
+    key: b.key, title: b.title, type: b.type ?? 'RACE',
     origins: { 'game.track': { source: 'STAGE' }, 'game.environment': { source: 'STAGE' }, 'game.cars': { source: 'COMMON' }, 'game.assists': { source: 'COMMON' }, 'game.simulation': { source: 'COMMON' }, 'game.finishRules': { source: 'COMMON' }, 'settings.practice': { source: 'COMMON' }, 'settings.qualifying': { source: 'COMMON' }, 'settings.race': overrides.race ? { source: 'OVERRIDE', baseline: { durationMinutes: 25, laps: null } } : { source: 'COMMON' } },
     carClass: null,
     weatherPresets: [weatherItem(weather.presetCode)].filter(Boolean),
     plugins: [{ id: 'cat-plugin-csp', kind: 'plugin', code: 'csp', title: 'Custom Shaders Patch', imageUrl: null }],
     game,
-    settings: raceSettings(overrides),
+    settings: b.settings ?? (b.type === 'PRACTICE' ? { durationMinutes: Math.round((b.end - b.start) / 60000), maxParticipants: 24 } : raceSettings(overrides)),
     admission: { minimumPilotLicense: 'D', minimumSafetyLicense: 'D' },
     content: [{ itemId: 'cat-track-' + b.track, versionId: '11', kind: 'track', code: b.track, title: t?.title ?? null, imageUrl: null }, ...['bmw_m4_gt3', 'porsche_911_gt3_r'].map((c, i) => ({ itemId: 'cat-car-' + c, versionId: String(20 + i), kind: 'car', code: c, title: CARS.find((x) => x.code === c).title, imageUrl: null }))],
     layoutTitle: t?.layouts.find((l) => l.code === (week?.track.layoutCode ?? ''))?.title ?? t?.layouts[0]?.title ?? null,
@@ -250,6 +271,7 @@ const entries = PILOTS.slice(0, 16).map((p, i) => ({
   actions: [action('review', i < 3, 'registration_closed'), action('remove', i >= 3 && i < 14, 'registration_closed')],
 }));
 function resultPayload(b) {
+  if (b.result) return b.result;
   const splits = progressFor(b).map((p, s) => ({
     splitIndex: s + 1,
     participants: p.participants,
@@ -284,9 +306,9 @@ export function workspaceSection(e, section, q) {
     return page(q.get('participantId') ? items.filter((x) => x.participantId === q.get('participantId')) : items, q, 25);
   }
   if (section === 'results') {
-    const done = e.blocks.filter((b) => b.execution?.status === 'COMPLETED');
+    const done = e.blocks.filter(hasResult);
     const heads = [{ id: 'r-total', title: 'Итог события', definition: { key: 'season', type: 'SEASON_STANDINGS', primaryForEvent: true }, displayStatus: status('WAITING', 'Ожидается результат'), currentRevisionId: null, currentRevisionNumber: 0 },
-      ...done.map((b) => ({ id: 'r' + b.id, title: b.title, definition: { key: b.key + '-result', type: 'RACE_CLASSIFICATION', primaryForEvent: false }, displayStatus: status('READY', 'Результат опубликован', b.execution.finishedAt), currentRevisionId: 'rev' + b.id, currentRevisionNumber: 1 }))];
+      ...done.map((b) => ({ id: 'r' + b.id, title: b.title, definition: { key: b.key + '-result', type: b.type === 'TIME_ATTACK' ? 'TIME_ATTACK' : b.type === 'TOURNAMENT' ? 'BRACKET' : 'RACE_CLASSIFICATION', primaryForEvent: false }, displayStatus: status('READY', 'Результат опубликован', b.execution.finishedAt), currentRevisionId: 'rev' + b.id, currentRevisionNumber: 1 }))];
     return page(q.get('resultId') ? heads.filter((x) => x.id === q.get('resultId')) : heads, q, 25);
   }
   if (section === 'revisions') {
@@ -330,7 +352,12 @@ export function workspaceSection(e, section, q) {
   }
   if (section === 'notifications') return { items: [], nextAfterId: null };
   if (section === 'edit') return { settings: e.settings ?? null, version: e.version, description: e.description };
-  if (section === 'attempts') return { items: [], nextAfterId: null };
+  if (section === 'attempts') {
+    const b = e.blocks.find((x) => x.id === q.get('blockId'));
+    if (!b) return { __status: 404, error: { code: 'event_block_not_found' } };
+    const items = (b.attempts ?? []).map((a) => ({ ...a, displayStatus: a.status === 'DISQUALIFIED' ? status('DISQUALIFIED', 'Дисквалификация', null, { code: 'TRACK_LIMITS', message: 'Попытка не засчитана: выезды за пределы трассы.' }) : status('COMPLETED', 'Завершено') }));
+    return page(items, q, 25);
+  }
   return { __status: 400, error: { code: 'invalid_workspace_section' } };
 }
 export const findEvent = (id) => EVENTS.find((e) => e.id === id);

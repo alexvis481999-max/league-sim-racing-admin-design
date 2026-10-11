@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import type { WorkspaceSummary } from '../current/workspace-data';
+import type { WorkspaceSummary } from './data';
 import type { Execute } from './useEventCommands';
 
 export type WorkspaceContextValue = {
@@ -21,7 +21,7 @@ export function useWorkspace() {
 export const action = (summary: WorkspaceSummary, code: string) => summary.actions.find((a) => a.code === code);
 
 /** Section values of the event shell. Legacy values from links of the previous admin are mapped in resolveSection. */
-export type Section = 'overview' | 'weeks' | 'stages' | 'program' | 'standings' | 'participants' | 'results' | 'servers' | 'journal' | 'appearance' | 'settings';
+export type Section = 'overview' | 'weeks' | 'stages' | 'program' | 'standings' | 'leaderboard' | 'participants' | 'results' | 'servers' | 'journal' | 'appearance' | 'settings';
 
 /** URL state of the workspace: ?section=… for the shell, ?week=… for a week/stage, ?stage=… for a race block. */
 export function useWorkspaceNav() {

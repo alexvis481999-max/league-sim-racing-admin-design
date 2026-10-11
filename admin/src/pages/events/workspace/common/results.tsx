@@ -2,8 +2,8 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { apiFetch } from '../../../../shared/api';
 import { AsyncView, Details, EmptyState, Notice, Panel, PillButtons, Table, TextLink, lapTime, shortDateTime } from '../../../../ui/v16';
-import { useWorkspaceData } from '../../current/workspace-data';
-import { workspacePath } from '../../current/workspace-ui';
+import { useWorkspaceData } from '../data';
+import { workspacePath } from '../data';
 import type { Value } from '../../current/event-api';
 
 type Row = Record<string, Value>;

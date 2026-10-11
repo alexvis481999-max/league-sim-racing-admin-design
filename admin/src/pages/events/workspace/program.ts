@@ -39,6 +39,11 @@ function groupState(blocks: ProgramBlock[]): GroupState {
   return 'scheduled';
 }
 export const groupStateLabel: Record<GroupState, string> = { live: 'Идёт', done: 'Завершена', 'done-with-errors': 'Завершена с ошибками', scheduled: 'По плану', uncertain: 'Состояние уточняется' };
+/** Russian grammatical gender follows the group kind (неделя / этап / раунд). */
+export function groupStateText(state: GroupState, kind: string | null) {
+  if (kind === 'WEEK' || kind === null) return groupStateLabel[state];
+  return ({ live: 'Идёт', done: 'Завершён', 'done-with-errors': 'Завершён с ошибками', scheduled: 'По плану', uncertain: 'Состояние уточняется' } as Record<GroupState, string>)[state];
+}
 export const groupStateTone: Record<GroupState, 'live' | 'done' | 'failed' | 'scheduled' | 'current'> = { live: 'live', done: 'done', 'done-with-errors': 'done', scheduled: 'scheduled', uncertain: 'current' };
 
 /** Groups by the server group.key; blocks without a group stay in their own bucket instead of being merged into a week. */

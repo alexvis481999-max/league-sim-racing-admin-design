@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import type { DisplayStatus } from '../../../../../../shared/event-status';
 import { AsyncView, Button, EmptyState, LoadMore, Panel, PillButtons, StatusBadge, Table, TextLink, recordTone, shortDateTime, type Tone } from '../../../../ui/v16';
-import { useWorkspaceData } from '../../current/workspace-data';
-import { workspacePath, type PageData } from '../../current/workspace-ui';
+import { useWorkspaceData } from '../data';
+import { workspacePath, type PageData } from '../data';
 import { useWorkspace, useWorkspaceNav } from '../context';
 
 type Session = { id: string; serverId: string | null; displayStatus: DisplayStatus; requestedAt: string; startedAt: string | null; stoppedAt: string | null; connectedPlayers: number | null; connectionLostAt: string | null; recoveryDeadlineAt: string | null; stopCause: string | null };

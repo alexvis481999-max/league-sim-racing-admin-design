@@ -116,17 +116,17 @@ export function ScenarioBuilder({ descriptionOnly = false, draftId, initialDocum
                   <span>Игра: <b>{catalog?.games.find((g) => g.code === descriptor.gameCode)?.title ?? descriptor.gameCode}</b> &nbsp;/&nbsp; Организатор: <b>{organizerName}</b> &nbsp;/&nbsp; Тип: <b>{descriptor.title}</b></span>
                   {!edit && <Button size="sm" disabled={disabled} onClick={() => setPicking(true)}>Изменить</Button>}
                 </div>
-                <nav className="lsr-steps" aria-label="Разделы конструктора" style={{ gridTemplateColumns: `repeat(${visible.length}, minmax(0,1fr))` }}>
+                <div className="lsr-steps" role="tablist" aria-label="Разделы конструктора" style={{ gridTemplateColumns: `repeat(${visible.length}, minmax(0,1fr))` }}>
                   {visible.map((s, i) => {
                     const state = stepState(s);
                     return (
-                      <button key={s.id} type="button" className={`${s.id === active ? 'is-active' : ''} ${state.cls}`} aria-current={s.id === active ? 'step' : undefined} title={state.status} onClick={() => go(s.id)}>
-                        <span className="lsr-step-num">{state.cls === 'is-done' ? '✓' : state.cls === 'is-error' ? '!' : i + 1}</span>
+                      <button key={s.id} type="button" role="tab" aria-selected={s.id === active} className={`${s.id === active ? 'is-active' : ''} ${state.cls}`} title={state.status} onClick={() => go(s.id)}>
+                        <span className="lsr-step-num" aria-hidden="true">{state.cls === 'is-done' ? '✓' : state.cls === 'is-error' ? '!' : i + 1}</span>
                         {s.id === 'program' ? programLabel[descriptor.code] ?? s.label : s.label}
                       </button>
                     );
                   })}
-                </nav>
+                </div>
                 <div className="lsr-cols-settings" style={{ gridTemplateColumns: 'minmax(0,1fr) 285px' }}>
                   <div className="lsr-stack" onChangeCapture={() => setVisited((old) => new Set([...old, active]))}>
                     {loading ? <Panel><LoadingBlock rows={6} label="Загружаем черновик" /></Panel> : (

@@ -1,4 +1,4 @@
-import { ResultDetails } from '../events/current/WorkspaceSections';
+import { ResultRevisions } from '../events/workspace/common/results';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Alert, Avatar, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Drawer, MenuItem, Skeleton, Stack, Tab, Tabs, TextField, Typography } from '@mui/material';
 import { apiFetch } from '../../shared/api';
@@ -70,7 +70,7 @@ function Participation({id}:{id:string}) {
     registrations:[time('createdAt','Подана'),eventColumn,state(),time('decidedAt','Решение'),time('withdrawnAt','Снятие'),time('removedAt','Удаление')],
     matchmaking:[time('queuedAt','В очереди с'),state(),{title:'Трасса',key:'trackTitle'},{title:'Погода',key:'weatherTitle'},state('matchStatus','Матч'),time('startedAt','Начало'),time('finishedAt','Окончание'),{title:'Подробности',render:r=><Button component="a" href={r.resultId?`/officiating?matchmakingId=${r.queueId}&matchId=${r.matchId}&resultId=${r.resultId}`:`/runtime?matchmakingId=${r.queueId}&matchId=${r.matchId??''}`}>Открыть</Button>}],
   };
-  return <><Tabs value={kind} onChange={(_,v)=>setKind(v)} sx={{mb:2}}><Tab value="participations" label="Выступления"/><Tab value="registrations" label="Заявки"/><Tab value="matchmaking" label="Матчмейкинг"/></Tabs><History url={`/admin/users/${id}/history/${kind}?limit=20`} paging={kind==='participations'?'page':'cursor'} columns={columns[kind]}/><Dialog open={!!result} onClose={()=>setResult(null)} fullWidth maxWidth="xl"><DialogTitle>Результаты заезда</DialogTitle><DialogContent>{result&&<ResultDetails eventId={result.eventId} resultId={result.resultId} active/>}</DialogContent><DialogActions><Button onClick={()=>setResult(null)}>Закрыть</Button></DialogActions></Dialog></>;
+  return <><Tabs value={kind} onChange={(_,v)=>setKind(v)} sx={{mb:2}}><Tab value="participations" label="Выступления"/><Tab value="registrations" label="Заявки"/><Tab value="matchmaking" label="Матчмейкинг"/></Tabs><History url={`/admin/users/${id}/history/${kind}?limit=20`} paging={kind==='participations'?'page':'cursor'} columns={columns[kind]}/><Dialog open={!!result} onClose={()=>setResult(null)} fullWidth maxWidth="xl"><DialogTitle>Результаты заезда</DialogTitle><DialogContent>{result&&<ResultRevisions eventId={result.eventId} resultId={result.resultId} active/>}</DialogContent><DialogActions><Button onClick={()=>setResult(null)}>Закрыть</Button></DialogActions></Dialog></>;
 }
 function Ratings({id}:{id:string}) {
   const [game,setGame]=useState('assetto_corsa'),[discipline,setDiscipline]=useState('circuit');

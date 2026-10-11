@@ -1,8 +1,8 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {ApiError,apiFetch} from '../../../shared/api';
 import {subscribeAdminRefresh} from '../../../shared/realtime';
-import type {Action,EventSummary} from './event-api';
-import type {ProgramBlock} from '../workspace/program';
+import type {Action,EventSummary} from '../current/event-api';
+import type {ProgramBlock} from './program';
 export interface WorkspaceSummary {
   eventId:string;version:string;observedAt:string;event:EventSummary;actions:Action[];editableFields:string[];
   metadata:{createdAt:string;updatedAt:string;publishedAt:string|null;author:{participantId:string;displayName:string}|null;organizer:{id:string;name:string}|null};
@@ -42,3 +42,6 @@ export function useWorkspaceData<T>(path:string,active=true) {
   useEffect(()=>{if(!active)return;void load();const stop=subscribeAdminRefresh(['events','runtime','results','rating','registration'],()=>load());return()=>{generation.current++;stop();};},[active,load]);
   return {data,error,status,busy,load};
 }
+
+export type PageData<T> = { items: T[]; nextAfterId: string | null };
+export const workspacePath = (id: string, section: string) => `/admin/events/${id}/workspace/${section}`;

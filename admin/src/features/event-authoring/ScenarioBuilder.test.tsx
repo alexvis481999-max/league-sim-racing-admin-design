@@ -58,7 +58,7 @@ it('saves an entirely empty draft without choosing a format or organizer', async
     settings: {},
     pendingImages: [],
   });
-  expect(screen.getByRole('button', { name: 'Опубликовать' }).hasAttribute('disabled')).toBe(true);
+  expect(screen.getByRole('button', { name: 'Проверить и опубликовать' }).hasAttribute('disabled')).toBe(true);
 });
 it.each(catalog.items.map((item) => item.code))(
   'opens every section of %s and preserves incomplete numbers',
@@ -76,14 +76,14 @@ it.each(catalog.items.map((item) => item.code))(
     };
     const saved = vi.fn();
     render(<ScenarioBuilder initialDocument={document} onSaved={saved} />);
-    await screen.findByRole('button', { name: item.title });
-    for (const label of ['Программа', 'Условия', 'Описание и оформление', 'Проверка']) {
+    await screen.findByRole('tablist', { name: 'Разделы конструктора' });
+    expect(screen.getByText(item.title, { selector: 'b' })).toBeTruthy();
+    for (const label of ['Программа|Расписание|Этапы|Сетка', 'Машины и условия', 'Внешний вид', 'Проверка', 'Основное']) {
       fireEvent.click(screen.getByRole('tab', { name: new RegExp(label) }));
       expect(
         screen.queryByText('Выберите формат события. Пустую форму уже можно сохранить.'),
       ).toBeNull();
     }
-    fireEvent.click(screen.getByRole('tab', { name: /Описание и оформление/ }));
     fireEvent.change(screen.getByLabelText('Название события'), {
       target: { value: 'Мой черновик' },
     });
@@ -123,13 +123,12 @@ it('invalidates publication immediately after changing the current revision', as
     />,
   );
   await waitFor(() =>
-    expect(screen.getByRole('button', { name: 'Опубликовать' }).hasAttribute('disabled')).toBe(
+    expect(screen.getByRole('button', { name: 'Проверить и опубликовать' }).hasAttribute('disabled')).toBe(
       false,
     ),
   );
-  fireEvent.click(screen.getByRole('tab', { name: /Описание и оформление/ }));
   fireEvent.change(screen.getByLabelText('Название события'), { target: { value: 'Изменено' } });
-  expect(screen.getByRole('button', { name: 'Опубликовать' }).hasAttribute('disabled')).toBe(true);
+  expect(screen.getByRole('button', { name: 'Проверить и опубликовать' }).hasAttribute('disabled')).toBe(true);
 });
 it('retries the same publication after a lost response without saving the published draft again', async () => {
   mock();
@@ -170,11 +169,11 @@ it('retries the same publication after a lost response without saving the publis
     />,
   );
   await waitFor(() =>
-    expect(screen.getByRole('button', { name: 'Опубликовать' }).hasAttribute('disabled')).toBe(
+    expect(screen.getByRole('button', { name: 'Проверить и опубликовать' }).hasAttribute('disabled')).toBe(
       false,
     ),
   );
-  fireEvent.click(screen.getByRole('button', { name: 'Опубликовать' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить и опубликовать' }));
   await screen.findByText('Ответ потерян');
   fireEvent.click(screen.getByRole('button', { name: 'Проверить публикацию' }));
   await waitFor(() => expect(published).toHaveBeenCalledWith('90'));
@@ -202,10 +201,9 @@ it('preserves an unfinished number and rich text when save is clicked immediatel
       }}
     />,
   );
-  await screen.findByRole('button', { name: item.title });
-  fireEvent.click(screen.getByRole('tab', { name: 'Программа' }));
+  fireEvent.click(await screen.findByRole('tab', { name: /Программа/ }));
   fireEvent.change(screen.getByLabelText('Участников на сервере'), { target: { value: '1.' } });
-  fireEvent.click(screen.getByRole('tab', { name: /Описание и оформление/ }));
+  fireEvent.click(screen.getByRole('tab', { name: /Основное/ }));
   const editor = screen.getByRole('textbox', { name: 'Описание события' });
   editor.innerHTML = '<p>Важное <b>описание</b></p>';
   fireEvent.input(editor);
@@ -230,10 +228,9 @@ it('keeps failed pasted images explicit while saving the text and incomplete dat
     pendingImages: [],
   };
   render(<ScenarioBuilder initialDocument={document as unknown as Document} onSaved={saved} />);
-  await screen.findByRole('button', { name: item.title });
-  fireEvent.click(screen.getByRole('tab', { name: /Программа/ }));
+  fireEvent.click(await screen.findByRole('tab', { name: /Программа/ }));
   fireEvent.change(screen.getByLabelText('Старт гоночной сессии — дата'), { target: { value: '2027-01-04' } });
-  fireEvent.click(screen.getByRole('tab', { name: /Описание и оформление/ }));
+  fireEvent.click(screen.getByRole('tab', { name: /Основное/ }));
   const editor = screen.getByRole('textbox', { name: 'Описание события' });
   editor.innerHTML = '<p>Текст не должен пропасть</p>';
   fireEvent.input(editor);
@@ -247,7 +244,7 @@ it('keeps failed pasted images explicit while saving the text and incomplete dat
   expect(state.settings.raceStartsAt).toBe('2027-01-04T');
   expect(state.settings.event.description).toContain('Текст не должен пропасть');
   expect(state.pendingImages).toHaveLength(1);
-  expect(screen.getByRole('button', { name: 'Опубликовать' }).hasAttribute('disabled')).toBe(true);
+  expect(screen.getByRole('button', { name: 'Проверить и опубликовать' }).hasAttribute('disabled')).toBe(true);
 });
 
 it('shows sections after organizer and format selection, and colors only visited sections independently', async () => {
@@ -283,11 +280,10 @@ it('shows sections after organizer and format selection, and colors only visited
   });
   render(<ScenarioBuilder />);
   expect(screen.queryByRole('tab')).toBeNull();
-  fireEvent.click(await screen.findByRole('button', { name: 'Разовая гонка' }));
+  fireEvent.click(await screen.findByRole('button', { name: /Клуб/ }));
   expect(screen.queryByRole('tab')).toBeNull();
-  fireEvent.mouseDown(screen.getByLabelText('Организатор'));
-  fireEvent.click(await screen.findByRole('option', { name: 'Клуб' }));
-  await screen.findByRole('tab', { name: 'Программа' });
+  fireEvent.click(await screen.findByRole('button', { name: /Разовая гонка/ }));
+  await screen.findByRole('tab', { name: /Программа/ });
   await waitFor(() =>
     expect(
       api.call.mock.calls.some(
@@ -298,17 +294,11 @@ it('shows sections after organizer and format selection, and colors only visited
     ).toBe(true),
   );
   for (const tab of screen.getAllByRole('tab')) expect(tab.title).toBe('Раздел ещё не проверен');
-  fireEvent.click(screen.getByRole('tab', { name: 'Описание и оформление' }));
-  await waitFor(() =>
-    expect(screen.getByRole('tab', { name: 'Описание и оформление' }).title).toBe(
-      'Раздел заполнен',
-    ),
-  );
-  fireEvent.click(screen.getByRole('tab', { name: 'Программа' }));
-  expect(screen.getByRole('tab', { name: 'Программа' }).title).toBe(
-    'Нужно исправить или заполнить поля',
-  );
-  expect(screen.getByRole('tab', { name: 'Условия' }).title).toBe('Раздел ещё не проверен');
+  fireEvent.click(screen.getByRole('tab', { name: /Внешний вид/ }));
+  await waitFor(() => expect(screen.getByRole('tab', { name: /Внешний вид/ }).title).toBe('Раздел заполнен'));
+  fireEvent.click(screen.getByRole('tab', { name: /Программа/ }));
+  expect(screen.getByRole('tab', { name: /Программа/ }).title).toBe('Нужно исправить или заполнить поля');
+  expect(screen.getByRole('tab', { name: /Машины и условия/ }).title).toBe('Раздел ещё не проверен');
   expect(screen.queryByRole('tab', { name: 'Формат' })).toBeNull();
 });
 it('switches formats without confirmation and restores the entered program on return', async () => {
@@ -328,11 +318,13 @@ it('switches formats without confirmation and restores the entered program on re
       }}
     />,
   );
-  await screen.findByLabelText('Участников на сервере');
+  fireEvent.click(await screen.findByRole('tab', { name: /Программа/ }));
   fireEvent.change(screen.getByLabelText('Участников на сервере'), { target: { value: '17' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Практика' }));
-  expect(screen.getByRole('tab', { name: 'Участники' })).toBeTruthy();
-  fireEvent.click(screen.getByRole('button', { name: 'Разовая гонка' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Сменить тип' }));
+  fireEvent.click(screen.getByRole('button', { name: /^Практика/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Сменить тип' }));
+  fireEvent.click(screen.getByRole('button', { name: /^Разовая гонка/ }));
+  fireEvent.click(screen.getByRole('tab', { name: /Программа/ }));
   expect((screen.getByLabelText('Участников на сервере') as HTMLInputElement).value).toBe('17');
   expect(confirm).not.toHaveBeenCalled();
   confirm.mockRestore();

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import type { DisplayStatus } from '../../../../../../shared/event-status';
 import { AsyncView, EmptyState, LoadMore, Panel, StatusBadge, Table, TextLink, shortDateTime } from '../../../../ui/v16';
-import { useWorkspaceData } from '../../current/workspace-data';
-import { workspacePath, type PageData } from '../../current/workspace-ui';
+import { useWorkspaceData } from '../data';
+import { workspacePath, type PageData } from '../data';
 import { useWorkspace, useWorkspaceNav } from '../context';
 import { ResultRevisions } from './results';
 
