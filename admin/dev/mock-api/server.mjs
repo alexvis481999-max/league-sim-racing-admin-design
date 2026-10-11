@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { DRAFTS, EVENTS, NOW, findEvent, listEvents, page, workspaceSection, workspaceSummary } from './events.mjs';
 import { referenceRoute } from './reference.mjs';
+import { attachRealtime, broadcast } from './realtime.mjs';
 
 const port = Number(process.env.MOCK_API_PORT ?? 3000);
 const catalog = JSON.parse(readFileSync(fileURLToPath(new URL('../../src/features/event-authoring/fixtures/catalog.json', import.meta.url)), 'utf8'));
@@ -106,5 +107,11 @@ const server = http.createServer(async (req, res) => {
   res.writeHead(status, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(result?.__status ? result.body : result));
   if (status >= 400) console.log(`[mock-api] ${status} ${req.method} ${url.pathname}`);
+  else if (req.method !== 'GET' && !url.pathname.endsWith('/resolve') && !url.pathname.includes('/auth/')) {
+    const section = url.pathname.split('/')[2] ?? '';
+    const domains = { events: 'events', 'event-drafts': 'events', 'event-authoring': 'events', 'practice-servers': 'practice', matchmaking: 'matchmaking', catalog: 'catalog', publications: 'publications', officiating: 'reports', access: 'security', users: 'users', chat: 'chats', notifications: 'notifications' };
+    setTimeout(() => broadcast(domains[section] ?? section), 50);
+  }
 });
+attachRealtime(server);
 server.listen(port, () => console.log(`[mock-api] http://localhost:${port} · simulated now ${NOW} · ${EVENTS.length} events`));

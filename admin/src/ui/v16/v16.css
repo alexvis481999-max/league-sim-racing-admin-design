@@ -421,3 +421,4 @@ body { margin: 0; background: var(--lsr-bg); color: var(--lsr-ink); font: 14px/1
 .lsr-formgroup .lsr-formgroup, .lsr-split .lsr-formgroup { border: 0; padding: 0; border-radius: 0; border-top: 1px solid var(--lsr-line2); padding-top: 16px; }
 .lsr-formgroup .lsr-formgroup > h3, .lsr-split .lsr-formgroup > h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .65px; color: var(--lsr-sub); font-weight: 800; }
 .lsr-split .lsr-override { grid-template-columns: minmax(150px, 1fr) minmax(140px, 190px) auto; }
+@media (max-width: 560px) { .lsr-crumbs > span:not(:last-child) { display: none; } }
