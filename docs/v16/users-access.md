@@ -91,5 +91,4 @@
 
 - `users.mjs`: `/admin/users`, `/admin/users/{id}` (PATCH и аватар проверяют `If-Match`), `/admin/users/{id}/history/{section}` (page / cursor / sequence), `/site/countries`, чтение `/admin/sanctions`.
 - `access.mjs`: роли, grants (статусы, история, `last_platform_owner`, версии), организаторы (POST, PUT, `/presentation`), пароль админки.
-- Ядро (`server.mjs`) регистрирует `GET /admin/access/organizers` раньше модулей и отдаёт упрощённую форму (`limits`, `quotaEnforcementMode` на верхнем уровне, `actions: []`), которая не совпадает с `OrganizerRecord` (`settings`, `usage`, `remaining`, `actions.edit/editPresentation`). С ним вкладка «Организаторы» не отрисуется. Нужно в ядре удалить этот маршрут (модуль `access.mjs` отдаёт полную форму) или привести его к `OrganizerRecord`. Для проверки использовалась копия сервера без этого маршрута.
 - Аудит, протесты, скины, каталог, чаты в профиле обслуживают модули соответствующих разделов.
