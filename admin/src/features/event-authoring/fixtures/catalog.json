@@ -1,0 +1,1797 @@
+{
+  "contractVersion": 1,
+  "games": [
+    {
+      "code": "assetto_corsa",
+      "title": "Assetto Corsa"
+    }
+  ],
+  "items": [
+    {
+      "code": "circuit_single_race",
+      "title": "Разовая гонка",
+      "gameCode": "assetto_corsa",
+      "sections": [
+        "format",
+        "program",
+        "conditions",
+        "participants",
+        "description",
+        "review"
+      ],
+      "components": [
+        "content",
+        "race",
+        "registration",
+        "admission",
+        "scoring",
+        "rating",
+        "schedule",
+        "description",
+        "presentation"
+      ],
+      "minimumParticipantsPath": "minimumParticipants",
+      "registrationWindow": true,
+      "defaults": {
+        "event": {
+          "organizerId": "",
+          "title": "Гонка",
+          "description": null,
+          "timezone": "",
+          "gameCode": "assetto_corsa",
+          "disciplineCode": "circuit"
+        },
+        "registration": {
+          "mode": "open_until_capacity"
+        },
+        "game": {
+          "track": {
+            "code": "",
+            "layoutCode": null
+          },
+          "cars": {
+            "allowedCarIds": [
+              ""
+            ],
+            "defaultCarId": ""
+          },
+          "environment": {
+            "sunAngle": 32,
+            "weather": {
+              "mode": "FIXED",
+              "presetCode": "3_clear",
+              "ambientTemperature": 22,
+              "roadTemperature": 30,
+              "ambientVariation": 2,
+              "roadVariation": 3
+            },
+            "dynamicTrack": {
+              "sessionStart": 96,
+              "randomness": 2,
+              "sessionTransfer": 80,
+              "lapGain": 10
+            }
+          },
+          "assists": {
+            "absAllowed": 1,
+            "tractionControlAllowed": 1,
+            "stabilityAllowed": false,
+            "forceVirtualMirror": false
+          },
+          "simulation": {
+            "tyreWearRatePercent": 100,
+            "fuelRatePercent": 100,
+            "damageMultiplierPercent": 100,
+            "allowedTyresOut": 2,
+            "legalTyres": []
+          },
+          "finishRules": {
+            "qualifyingMaximumWaitPercent": 120,
+            "raceOverTimeSeconds": 180
+          },
+          "catalogChoices": {
+            "weatherCodes": [],
+            "pluginCodes": []
+          }
+        },
+        "race": {
+          "format": "SINGLE_RACE",
+          "resultAggregation": "ONLY_RACE",
+          "maxPlayersPerSession": 24,
+          "maxSessions": 1,
+          "practice": {
+            "durationMinutes": 20
+          },
+          "qualifying": {
+            "durationMinutes": 15
+          },
+          "race": {
+            "durationMinutes": 30,
+            "laps": null
+          },
+          "reverseGridPositions": null
+        },
+        "minimumParticipants": 2,
+        "scoring": {
+          "mode": "classic_top_10",
+          "points": {
+            "1": 25,
+            "2": 18,
+            "3": 15,
+            "4": 12,
+            "5": 10,
+            "6": 8,
+            "7": 6,
+            "8": 4,
+            "9": 2,
+            "10": 1
+          }
+        },
+        "rating": {
+          "mode": "result",
+          "pilotMultiplier": 1,
+          "safetyMultiplier": 1
+        },
+        "authoring": {
+          "presetId": "club-racing",
+          "version": 2,
+          "editorVersion": 2
+        },
+        "registrationRules": {
+          "closesBeforeMinutes": 3,
+          "durationMinutes": 1440
+        },
+        "raceStartsAt": "",
+        "participantAdmission": {
+          "minimumPilotLicense": "D",
+          "minimumSafetyLicense": "D"
+        }
+      },
+      "raceOverrideFields": [
+        "practice",
+        "qualifying",
+        "race",
+        "estimatedRaceMinutes"
+      ],
+      "windowDefaultMinutes": 1440,
+      "admissionTypes": [
+        "OPEN",
+        "EVENT_REGISTRATION",
+        "TIME_ATTACK_QUALIFICATION"
+      ],
+      "entryTypes": [
+        "DIRECT_REGISTRATION",
+        "TIME_ATTACK_QUALIFICATION"
+      ],
+      "carChangePolicies": [
+        "reset_points",
+        "free"
+      ],
+      "licenses": [
+        "D",
+        "C",
+        "B",
+        "A"
+      ],
+      "practiceMinimumParticipants": 0,
+      "raceDefaults": {
+        "format": "SINGLE_RACE",
+        "resultAggregation": "ONLY_RACE",
+        "maxPlayersPerSession": 24,
+        "maxSessions": 1,
+        "practice": {
+          "durationMinutes": 20
+        },
+        "qualifying": {
+          "durationMinutes": 15
+        },
+        "race": {
+          "durationMinutes": 30,
+          "laps": null
+        },
+        "reverseGridPositions": null
+      },
+      "practiceDefaults": {
+        "durationMinutes": 20,
+        "maxParticipants": 24
+      },
+      "constraints": {
+        "absAllowed": {
+          "minimum": 0,
+          "maximum": 2,
+          "integer": true
+        },
+        "tractionControlAllowed": {
+          "minimum": 0,
+          "maximum": 2,
+          "integer": true
+        },
+        "allowedTyresOut": {
+          "minimum": -1,
+          "maximum": 1000,
+          "integer": true
+        },
+        "qualifyingMaximumWaitPercent": {
+          "minimum": 0,
+          "maximum": 1000,
+          "integer": true
+        },
+        "raceOverTimeSeconds": {
+          "minimum": 0,
+          "maximum": 86400,
+          "integer": true
+        },
+        "maxPlayersPerSession": {
+          "minimum": 1,
+          "integer": true
+        },
+        "maxSessions": {
+          "minimum": 1,
+          "integer": true
+        },
+        "reverseGridPositions": {
+          "minimum": 1,
+          "integer": true
+        },
+        "laps": {
+          "minimum": 1,
+          "integer": true
+        },
+        "maxParticipants": {
+          "minimum": 1,
+          "integer": true
+        },
+        "attemptLimit": {
+          "minimum": 1,
+          "integer": true
+        },
+        "durationMinutes": {
+          "minimum": 0,
+          "integer": false
+        },
+        "attemptDurationMinutes": {
+          "exclusiveMinimum": 0,
+          "integer": false
+        },
+        "estimatedRaceMinutes": {
+          "exclusiveMinimum": 0,
+          "integer": false
+        }
+      },
+      "options": {
+        "assists": [
+          "0",
+          "1",
+          "2"
+        ],
+        "registration": [
+          "open_until_capacity",
+          "application_review",
+          "locked_roster"
+        ],
+        "raceFormats": [
+          "SINGLE_RACE",
+          "REVERSE_GRID_DOUBLE_RACE"
+        ],
+        "raceAggregation": {
+          "SINGLE_RACE": [
+            "ONLY_RACE"
+          ],
+          "REVERSE_GRID_DOUBLE_RACE": [
+            "SUM_POINTS"
+          ]
+        },
+        "elimination": [
+          "SINGLE",
+          "DOUBLE"
+        ],
+        "pairing": [
+          "SEEDED",
+          "RANDOM"
+        ],
+        "scoring": [
+          "none",
+          "classic_top_10"
+        ],
+        "rating": [
+          "none",
+          "result"
+        ]
+      },
+      "enabled": true,
+      "reason": null
+    },
+    {
+      "code": "practice",
+      "title": "Практика",
+      "gameCode": "assetto_corsa",
+      "sections": [
+        "format",
+        "program",
+        "conditions",
+        "participants",
+        "description",
+        "review"
+      ],
+      "components": [
+        "content",
+        "practice",
+        "schedule",
+        "description",
+        "presentation"
+      ],
+      "minimumParticipantsPath": null,
+      "registrationWindow": false,
+      "defaults": {
+        "event": {
+          "organizerId": "",
+          "title": "Практика",
+          "description": null,
+          "timezone": "",
+          "gameCode": "assetto_corsa",
+          "disciplineCode": "circuit"
+        },
+        "game": {
+          "track": {
+            "code": "",
+            "layoutCode": null
+          },
+          "cars": {
+            "allowedCarIds": [
+              ""
+            ],
+            "defaultCarId": ""
+          },
+          "environment": {
+            "sunAngle": 32,
+            "weather": {
+              "mode": "FIXED",
+              "presetCode": "3_clear",
+              "ambientTemperature": 22,
+              "roadTemperature": 30,
+              "ambientVariation": 2,
+              "roadVariation": 3
+            },
+            "dynamicTrack": {
+              "sessionStart": 96,
+              "randomness": 2,
+              "sessionTransfer": 80,
+              "lapGain": 10
+            }
+          },
+          "assists": {
+            "absAllowed": 1,
+            "tractionControlAllowed": 1,
+            "stabilityAllowed": false,
+            "forceVirtualMirror": false
+          },
+          "simulation": {
+            "tyreWearRatePercent": 100,
+            "fuelRatePercent": 100,
+            "damageMultiplierPercent": 100,
+            "allowedTyresOut": 2,
+            "legalTyres": []
+          },
+          "finishRules": {
+            "qualifyingMaximumWaitPercent": 120,
+            "raceOverTimeSeconds": 180
+          },
+          "catalogChoices": {
+            "weatherCodes": [],
+            "pluginCodes": []
+          }
+        },
+        "practice": {
+          "durationMinutes": 20,
+          "maxParticipants": 24
+        },
+        "minimumParticipants": 0,
+        "authoring": {
+          "presetId": "club-racing",
+          "version": 2,
+          "editorVersion": 2
+        },
+        "availability": {
+          "startsAt": ""
+        },
+        "participantAdmission": {
+          "minimumPilotLicense": "D",
+          "minimumSafetyLicense": "D"
+        }
+      },
+      "raceOverrideFields": [
+        "practice",
+        "qualifying",
+        "race",
+        "estimatedRaceMinutes"
+      ],
+      "windowDefaultMinutes": 1440,
+      "admissionTypes": [
+        "OPEN",
+        "EVENT_REGISTRATION",
+        "TIME_ATTACK_QUALIFICATION"
+      ],
+      "entryTypes": [
+        "DIRECT_REGISTRATION",
+        "TIME_ATTACK_QUALIFICATION"
+      ],
+      "carChangePolicies": [
+        "reset_points",
+        "free"
+      ],
+      "licenses": [
+        "D",
+        "C",
+        "B",
+        "A"
+      ],
+      "practiceMinimumParticipants": 0,
+      "raceDefaults": null,
+      "practiceDefaults": {
+        "durationMinutes": 20,
+        "maxParticipants": 24
+      },
+      "constraints": {
+        "absAllowed": {
+          "minimum": 0,
+          "maximum": 2,
+          "integer": true
+        },
+        "tractionControlAllowed": {
+          "minimum": 0,
+          "maximum": 2,
+          "integer": true
+        },
+        "allowedTyresOut": {
+          "minimum": -1,
+          "maximum": 1000,
+          "integer": true
+        },
+        "qualifyingMaximumWaitPercent": {
+          "minimum": 0,
+          "maximum": 1000,
+          "integer": true
+        },
+        "raceOverTimeSeconds": {
+          "minimum": 0,
+          "maximum": 86400,
+          "integer": true
+        },
+        "maxPlayersPerSession": {
+          "minimum": 1,
+          "integer": true
+        },
+        "maxSessions": {
+          "minimum": 1,
+          "integer": true
+        },
+        "reverseGridPositions": {
+          "minimum": 1,
+          "integer": true
+        },
+        "laps": {
+          "minimum": 1,
+          "integer": true
+        },
+        "maxParticipants": {
+          "minimum": 1,
+          "integer": true
+        },
+        "attemptLimit": {
+          "minimum": 1,
+          "integer": true
+        },
+        "durationMinutes": {
+          "minimum": 0,
+          "integer": false
+        },
+        "attemptDurationMinutes": {
+          "exclusiveMinimum": 0,
+          "integer": false
+        },
+        "estimatedRaceMinutes": {
+          "exclusiveMinimum": 0,
+          "integer": false
+        }
+      },
+      "options": {
+        "assists": [
+          "0",
+          "1",
+          "2"
+        ],
+        "registration": [],
+        "raceFormats": [],
+        "raceAggregation": {
+          "SINGLE_RACE": [
+            "ONLY_RACE"
+          ],
+          "REVERSE_GRID_DOUBLE_RACE": [
+            "SUM_POINTS"
+          ]
+        },
+        "elimination": [
+          "SINGLE",
+          "DOUBLE"
+        ],
+        "pairing": [
+          "SEEDED",
+          "RANDOM"
+        ],
+        "scoring": [
+          "none",
+          "classic_top_10"
+        ],
+        "rating": [
+          "none"
+        ]
+      },
+      "enabled": true,
+      "reason": null
+    },
+    {
+      "code": "time_attack",
+      "title": "Тайм-аттак",
+      "gameCode": "assetto_corsa",
+      "sections": [
+        "format",
+        "program",
+        "conditions",
+        "participants",
+        "description",
+        "review"
+      ],
+      "components": [
+        "content",
+        "timeAttack",
+        "admission",
+        "schedule",
+        "description",
+        "presentation"
+      ],
+      "minimumParticipantsPath": null,
+      "registrationWindow": false,
+      "defaults": {
+        "event": {
+          "organizerId": "",
+          "title": "Тайм-аттак",
+          "description": null,
+          "timezone": "",
+          "gameCode": "assetto_corsa",
+          "disciplineCode": "circuit"
+        },
+        "game": {
+          "track": {
+            "code": "",
+            "layoutCode": null
+          },
+          "cars": {
+            "allowedCarIds": [
+              ""
+            ],
+            "defaultCarId": ""
+          },
+          "environment": {
+            "sunAngle": 32,
+            "weather": {
+              "mode": "FIXED",
+              "presetCode": "3_clear",
+              "ambientTemperature": 22,
+              "roadTemperature": 30,
+              "ambientVariation": 2,
+              "roadVariation": 3
+            },
+            "dynamicTrack": {
+              "sessionStart": 96,
+              "randomness": 2,
+              "sessionTransfer": 80,
+              "lapGain": 10
+            }
+          },
+          "assists": {
+            "absAllowed": 1,
+            "tractionControlAllowed": 1,
+            "stabilityAllowed": false,
+            "forceVirtualMirror": false
+          },
+          "simulation": {
+            "tyreWearRatePercent": 100,
+            "fuelRatePercent": 100,
+            "damageMultiplierPercent": 100,
+            "allowedTyresOut": 2,
+            "legalTyres": []
+          },
+          "finishRules": {
+            "qualifyingMaximumWaitPercent": 120,
+            "raceOverTimeSeconds": 180
+          },
+          "catalogChoices": {
+            "weatherCodes": [],
+            "pluginCodes": []
+          }
+        },
+        "timeAttack": {
+          "attemptDurationMinutes": 20
+        },
+        "scoring": {
+          "mode": "none"
+        },
+        "authoring": {
+          "presetId": "club-racing",
+          "version": 2,
+          "editorVersion": 2
+        },
+        "availability": {
+          "startsAt": "",
+          "endsAt": ""
+        },
+        "participantAdmission": {
+          "minimumPilotLicense": "D",
+          "minimumSafetyLicense": "D"
+        }
+      },
+      "raceOverrideFields": [
+        "practice",
+        "qualifying",
+        "race",
+        "estimatedRaceMinutes"
+      ],
+      "windowDefaultMinutes": 1440,
+      "admissionTypes": [
+        "OPEN",
+        "EVENT_REGISTRATION",
+        "TIME_ATTACK_QUALIFICATION"
+      ],
+      "entryTypes": [
+        "DIRECT_REGISTRATION",
+        "TIME_ATTACK_QUALIFICATION"
+      ],
+      "carChangePolicies": [
+        "reset_points",
+        "free"
+      ],
+      "licenses": [
+        "D",
+        "C",
+        "B",
+        "A"
+      ],
+      "practiceMinimumParticipants": 0,
+      "raceDefaults": null,
+      "practiceDefaults": {
+        "durationMinutes": 20,
+        "maxParticipants": 24
+      },
+      "constraints": {
+        "absAllowed": {
+          "minimum": 0,
+          "maximum": 2,
+          "integer": true
+        },
+        "tractionControlAllowed": {
+          "minimum": 0,
+          "maximum": 2,
+          "integer": true
+        },
+        "allowedTyresOut": {
+          "minimum": -1,
+          "maximum": 1000,
+          "integer": true
+        },
+        "qualifyingMaximumWaitPercent": {
+          "minimum": 0,
+          "maximum": 1000,
+          "integer": true
+        },
+        "raceOverTimeSeconds": {
+          "minimum": 0,
+          "maximum": 86400,
+          "integer": true
+        },
+        "maxPlayersPerSession": {
+          "minimum": 1,
+          "integer": true
+        },
+        "maxSessions": {
+          "minimum": 1,
+          "integer": true
+        },
+        "reverseGridPositions": {
+          "minimum": 1,
+          "integer": true
+        },
+        "laps": {
+          "minimum": 1,
+          "integer": true
+        },
+        "maxParticipants": {
+          "minimum": 1,
+          "integer": true
+        },
+        "attemptLimit": {
+          "minimum": 1,
+          "integer": true
+        },
+        "durationMinutes": {
+          "minimum": 0,
+          "integer": false
+        },
+        "attemptDurationMinutes": {
+          "exclusiveMinimum": 0,
+          "integer": false
+        },
+        "estimatedRaceMinutes": {
+          "exclusiveMinimum": 0,
+          "integer": false
+        }
+      },
+      "options": {
+        "assists": [
+          "0",
+          "1",
+          "2"
+        ],
+        "registration": [],
+        "raceFormats": [],
+        "raceAggregation": {
+          "SINGLE_RACE": [
+            "ONLY_RACE"
+          ],
+          "REVERSE_GRID_DOUBLE_RACE": [
+            "SUM_POINTS"
+          ]
+        },
+        "elimination": [
+          "SINGLE",
+          "DOUBLE"
+        ],
+        "pairing": [
+          "SEEDED",
+          "RANDOM"
+        ],
+        "scoring": [
+          "none",
+          "classic_top_10"
+        ],
+        "rating": [
+          "none"
+        ]
+      },
+      "enabled": true,
+      "reason": null
+    },
+    {
+      "code": "weekly",
+      "title": "Регулярные гонки",
+      "gameCode": "assetto_corsa",
+      "sections": [
+        "format",
+        "program",
+        "conditions",
+        "participants",
+        "description",
+        "review"
+      ],
+      "components": [
+        "weekly",
+        "registration",
+        "admission",
+        "scoring",
+        "rating",
+        "schedule",
+        "description",
+        "presentation"
+      ],
+      "minimumParticipantsPath": "minimumParticipantsPerRace",
+      "registrationWindow": false,
+      "defaults": {
+        "event": {
+          "organizerId": "",
+          "title": "Регулярные гонки",
+          "description": null,
+          "timezone": "",
+          "gameCode": "assetto_corsa",
+          "disciplineCode": "circuit"
+        },
+        "minimumParticipantsPerRace": 2,
+        "raceRegistration": {
+          "mode": "open_until_capacity"
+        },
+        "scoring": {
+          "mode": "classic_top_10",
+          "points": {
+            "1": 25,
+            "2": 18,
+            "3": 15,
+            "4": 12,
+            "5": 10,
+            "6": 8,
+            "7": 6,
+            "8": 4,
+            "9": 2,
+            "10": 1
+          }
+        },
+        "rating": {
+          "mode": "result",
+          "pilotMultiplier": 1,
+          "safetyMultiplier": 1
+        },
+        "authoring": {
+          "presetId": "club-racing",
+          "version": 2,
+          "editorVersion": 2
+        },
+        "weekly": {
+          "firstDate": "",
+          "dayTimes": {
+            "3": [
+              "20:00"
+            ]
+          },
+          "weeks": [
+            {
+              "_editorId": "week-0",
+              "title": "Первая неделя",
+              "track": {
+                "code": "",
+                "layoutCode": null
+              },
+              "weather": {
+                "sunAngle": 32,
+                "weather": {
+                  "mode": "FIXED",
+                  "presetCode": "3_clear",
+                  "ambientTemperature": 22,
+                  "roadTemperature": 30,
+                  "ambientVariation": 2,
+                  "roadVariation": 3
+                },
+                "dynamicTrack": {
+                  "sessionStart": 96,
+                  "randomness": 2,
+                  "sessionTransfer": 80,
+                  "lapGain": 10
+                }
+              },
+              "weatherCodes": [],
+              "raceOverrides": {}
+            }
+          ]
+        },
+        "participantAdmission": {
+          "minimumPilotLicense": "D",
+          "minimumSafetyLicense": "D"
+        },
+        "common": {
+          "game": {
+            "track": {
+              "code": "",
+              "layoutCode": null
+            },
+            "cars": {
+              "allowedCarIds": [
+                ""
+              ],
+              "defaultCarId": ""
+            },
+            "environment": {
+              "sunAngle": 32,
+              "weather": {
+                "mode": "FIXED",
+                "presetCode": "3_clear",
+                "ambientTemperature": 22,
+                "roadTemperature": 30,
+                "ambientVariation": 2,
+                "roadVariation": 3
+              },
+              "dynamicTrack": {
+                "sessionStart": 96,
+                "randomness": 2,
+                "sessionTransfer": 80,
+                "lapGain": 10
+              }
+            },
+            "assists": {
+              "absAllowed": 1,
+              "tractionControlAllowed": 1,
+              "stabilityAllowed": false,
+              "forceVirtualMirror": false
+            },
+            "simulation": {
+              "tyreWearRatePercent": 100,
+              "fuelRatePercent": 100,
+              "damageMultiplierPercent": 100,
+              "allowedTyresOut": 2,
+              "legalTyres": []
+            },
+            "finishRules": {
+              "qualifyingMaximumWaitPercent": 120,
+              "raceOverTimeSeconds": 180
+            },
+            "catalogChoices": {
+              "weatherCodes": [],
+              "pluginCodes": []
+            }
+          },
+          "race": {
+            "format": "SINGLE_RACE",
+            "resultAggregation": "ONLY_RACE",
+            "maxPlayersPerSession": 24,
+            "maxSessions": 1,
+            "practice": {
+              "durationMinutes": 20
+            },
+            "qualifying": {
+              "durationMinutes": 15
+            },
+            "race": {
+              "durationMinutes": 30,
+              "laps": null
+            },
+            "reverseGridPositions": null
+          }
+        },
+        "registrationRules": {
+          "durationMinutes": 1440,
+          "closesBeforeMinutes": 3
+        }
+      },
+      "raceOverrideFields": [
+        "practice",
+        "qualifying",
+        "race",
+        "estimatedRaceMinutes"
+      ],
+      "windowDefaultMinutes": 1440,
+      "admissionTypes": [
+        "OPEN",
+        "EVENT_REGISTRATION",
+        "TIME_ATTACK_QUALIFICATION"
+      ],
+      "entryTypes": [
+        "DIRECT_REGISTRATION",
+        "TIME_ATTACK_QUALIFICATION"
+      ],
+      "carChangePolicies": [
+        "reset_points",
+        "free"
+      ],
+      "licenses": [
+        "D",
+        "C",
+        "B",
+        "A"
+      ],
+      "practiceMinimumParticipants": 0,
+      "raceDefaults": {
+        "format": "SINGLE_RACE",
+        "resultAggregation": "ONLY_RACE",
+        "maxPlayersPerSession": 24,
+        "maxSessions": 1,
+        "practice": {
+          "durationMinutes": 20
+        },
+        "qualifying": {
+          "durationMinutes": 15
+        },
+        "race": {
+          "durationMinutes": 30,
+          "laps": null
+        },
+        "reverseGridPositions": null
+      },
+      "practiceDefaults": {
+        "durationMinutes": 20,
+        "maxParticipants": 24
+      },
+      "constraints": {
+        "absAllowed": {
+          "minimum": 0,
+          "maximum": 2,
+          "integer": true
+        },
+        "tractionControlAllowed": {
+          "minimum": 0,
+          "maximum": 2,
+          "integer": true
+        },
+        "allowedTyresOut": {
+          "minimum": -1,
+          "maximum": 1000,
+          "integer": true
+        },
+        "qualifyingMaximumWaitPercent": {
+          "minimum": 0,
+          "maximum": 1000,
+          "integer": true
+        },
+        "raceOverTimeSeconds": {
+          "minimum": 0,
+          "maximum": 86400,
+          "integer": true
+        },
+        "maxPlayersPerSession": {
+          "minimum": 1,
+          "integer": true
+        },
+        "maxSessions": {
+          "minimum": 1,
+          "integer": true
+        },
+        "reverseGridPositions": {
+          "minimum": 1,
+          "integer": true
+        },
+        "laps": {
+          "minimum": 1,
+          "integer": true
+        },
+        "maxParticipants": {
+          "minimum": 1,
+          "integer": true
+        },
+        "attemptLimit": {
+          "minimum": 1,
+          "integer": true
+        },
+        "durationMinutes": {
+          "minimum": 0,
+          "integer": false
+        },
+        "attemptDurationMinutes": {
+          "exclusiveMinimum": 0,
+          "integer": false
+        },
+        "estimatedRaceMinutes": {
+          "exclusiveMinimum": 0,
+          "integer": false
+        }
+      },
+      "options": {
+        "assists": [
+          "0",
+          "1",
+          "2"
+        ],
+        "registration": [
+          "open_until_capacity",
+          "application_review",
+          "locked_roster"
+        ],
+        "raceFormats": [
+          "SINGLE_RACE",
+          "REVERSE_GRID_DOUBLE_RACE"
+        ],
+        "raceAggregation": {
+          "SINGLE_RACE": [
+            "ONLY_RACE"
+          ],
+          "REVERSE_GRID_DOUBLE_RACE": [
+            "SUM_POINTS"
+          ]
+        },
+        "elimination": [
+          "SINGLE",
+          "DOUBLE"
+        ],
+        "pairing": [
+          "SEEDED",
+          "RANDOM"
+        ],
+        "scoring": [
+          "none",
+          "classic_top_10"
+        ],
+        "rating": [
+          "none",
+          "result"
+        ]
+      },
+      "enabled": true,
+      "reason": null
+    },
+    {
+      "code": "championship",
+      "title": "Чемпионат",
+      "gameCode": "assetto_corsa",
+      "sections": [
+        "format",
+        "program",
+        "conditions",
+        "participants",
+        "description",
+        "review"
+      ],
+      "components": [
+        "championship",
+        "admission",
+        "scoring",
+        "rating",
+        "schedule",
+        "description",
+        "presentation"
+      ],
+      "minimumParticipantsPath": null,
+      "registrationWindow": true,
+      "defaults": {
+        "event": {
+          "organizerId": "",
+          "title": "Чемпионат",
+          "description": null,
+          "timezone": "",
+          "gameCode": "assetto_corsa",
+          "disciplineCode": "circuit"
+        },
+        "admission": {
+          "type": "EVENT_REGISTRATION",
+          "registration": {
+            "mode": "open_until_capacity"
+          },
+          "availability": {
+            "startsAt": "",
+            "endsAt": ""
+          },
+          "minimumParticipants": 1,
+          "game": {
+            "track": {
+              "code": "",
+              "layoutCode": null
+            },
+            "cars": {
+              "allowedCarIds": [
+                ""
+              ],
+              "defaultCarId": ""
+            },
+            "environment": {
+              "sunAngle": 32,
+              "weather": {
+                "mode": "FIXED",
+                "presetCode": "3_clear",
+                "ambientTemperature": 22,
+                "roadTemperature": 30,
+                "ambientVariation": 2,
+                "roadVariation": 3
+              },
+              "dynamicTrack": {
+                "sessionStart": 96,
+                "randomness": 2,
+                "sessionTransfer": 80,
+                "lapGain": 10
+              }
+            },
+            "assists": {
+              "absAllowed": 1,
+              "tractionControlAllowed": 1,
+              "stabilityAllowed": false,
+              "forceVirtualMirror": false
+            },
+            "simulation": {
+              "tyreWearRatePercent": 100,
+              "fuelRatePercent": 100,
+              "damageMultiplierPercent": 100,
+              "allowedTyresOut": 2,
+              "legalTyres": []
+            },
+            "finishRules": {
+              "qualifyingMaximumWaitPercent": 120,
+              "raceOverTimeSeconds": 180
+            },
+            "catalogChoices": {
+              "weatherCodes": [],
+              "pluginCodes": []
+            }
+          },
+          "settings": {
+            "attemptDurationMinutes": 20,
+            "attemptLimit": 3
+          }
+        },
+        "stages": [
+          {
+            "_editorId": "stage-0",
+            "title": "Первый этап",
+            "startsAt": "",
+            "track": {
+              "code": "",
+              "layoutCode": null
+            },
+            "weather": {
+              "sunAngle": 32,
+              "weather": {
+                "mode": "FIXED",
+                "presetCode": "3_clear",
+                "ambientTemperature": 22,
+                "roadTemperature": 30,
+                "ambientVariation": 2,
+                "roadVariation": 3
+              },
+              "dynamicTrack": {
+                "sessionStart": 96,
+                "randomness": 2,
+                "sessionTransfer": 80,
+                "lapGain": 10
+              }
+            },
+            "weatherCodes": [],
+            "raceOverrides": {},
+            "practice": null
+          }
+        ],
+        "scoring": {
+          "mode": "classic_top_10",
+          "points": {
+            "1": 25,
+            "2": 18,
+            "3": 15,
+            "4": 12,
+            "5": 10,
+            "6": 8,
+            "7": 6,
+            "8": 4,
+            "9": 2,
+            "10": 1
+          }
+        },
+        "rating": {
+          "mode": "result",
+          "pilotMultiplier": 1,
+          "safetyMultiplier": 1
+        },
+        "authoring": {
+          "presetId": "club-racing",
+          "version": 2,
+          "editorVersion": 2
+        },
+        "registrationRules": {
+          "closesBeforeMinutes": 3,
+          "durationMinutes": 1440
+        },
+        "participantAdmission": {
+          "minimumPilotLicense": "D",
+          "minimumSafetyLicense": "D"
+        },
+        "carChangePolicy": "reset_points",
+        "common": {
+          "game": {
+            "track": {
+              "code": "",
+              "layoutCode": null
+            },
+            "cars": {
+              "allowedCarIds": [
+                ""
+              ],
+              "defaultCarId": ""
+            },
+            "environment": {
+              "sunAngle": 32,
+              "weather": {
+                "mode": "FIXED",
+                "presetCode": "3_clear",
+                "ambientTemperature": 22,
+                "roadTemperature": 30,
+                "ambientVariation": 2,
+                "roadVariation": 3
+              },
+              "dynamicTrack": {
+                "sessionStart": 96,
+                "randomness": 2,
+                "sessionTransfer": 80,
+                "lapGain": 10
+              }
+            },
+            "assists": {
+              "absAllowed": 1,
+              "tractionControlAllowed": 1,
+              "stabilityAllowed": false,
+              "forceVirtualMirror": false
+            },
+            "simulation": {
+              "tyreWearRatePercent": 100,
+              "fuelRatePercent": 100,
+              "damageMultiplierPercent": 100,
+              "allowedTyresOut": 2,
+              "legalTyres": []
+            },
+            "finishRules": {
+              "qualifyingMaximumWaitPercent": 120,
+              "raceOverTimeSeconds": 180
+            },
+            "catalogChoices": {
+              "weatherCodes": [],
+              "pluginCodes": []
+            }
+          },
+          "race": {
+            "format": "SINGLE_RACE",
+            "resultAggregation": "ONLY_RACE",
+            "maxPlayersPerSession": 24,
+            "maxSessions": 1,
+            "practice": {
+              "durationMinutes": 20
+            },
+            "qualifying": {
+              "durationMinutes": 15
+            },
+            "race": {
+              "durationMinutes": 30,
+              "laps": null
+            },
+            "reverseGridPositions": null
+          }
+        }
+      },
+      "raceOverrideFields": [
+        "practice",
+        "qualifying",
+        "race",
+        "estimatedRaceMinutes"
+      ],
+      "windowDefaultMinutes": 1440,
+      "admissionTypes": [
+        "OPEN",
+        "EVENT_REGISTRATION",
+        "TIME_ATTACK_QUALIFICATION"
+      ],
+      "entryTypes": [
+        "DIRECT_REGISTRATION",
+        "TIME_ATTACK_QUALIFICATION"
+      ],
+      "carChangePolicies": [
+        "reset_points",
+        "free"
+      ],
+      "licenses": [
+        "D",
+        "C",
+        "B",
+        "A"
+      ],
+      "practiceMinimumParticipants": 0,
+      "raceDefaults": {
+        "format": "SINGLE_RACE",
+        "resultAggregation": "ONLY_RACE",
+        "maxPlayersPerSession": 24,
+        "maxSessions": 1,
+        "practice": {
+          "durationMinutes": 20
+        },
+        "qualifying": {
+          "durationMinutes": 15
+        },
+        "race": {
+          "durationMinutes": 30,
+          "laps": null
+        },
+        "reverseGridPositions": null
+      },
+      "practiceDefaults": {
+        "durationMinutes": 20,
+        "maxParticipants": 24
+      },
+      "constraints": {
+        "absAllowed": {
+          "minimum": 0,
+          "maximum": 2,
+          "integer": true
+        },
+        "tractionControlAllowed": {
+          "minimum": 0,
+          "maximum": 2,
+          "integer": true
+        },
+        "allowedTyresOut": {
+          "minimum": -1,
+          "maximum": 1000,
+          "integer": true
+        },
+        "qualifyingMaximumWaitPercent": {
+          "minimum": 0,
+          "maximum": 1000,
+          "integer": true
+        },
+        "raceOverTimeSeconds": {
+          "minimum": 0,
+          "maximum": 86400,
+          "integer": true
+        },
+        "maxPlayersPerSession": {
+          "minimum": 1,
+          "integer": true
+        },
+        "maxSessions": {
+          "minimum": 1,
+          "integer": true
+        },
+        "reverseGridPositions": {
+          "minimum": 1,
+          "integer": true
+        },
+        "laps": {
+          "minimum": 1,
+          "integer": true
+        },
+        "maxParticipants": {
+          "minimum": 1,
+          "integer": true
+        },
+        "attemptLimit": {
+          "minimum": 1,
+          "integer": true
+        },
+        "durationMinutes": {
+          "minimum": 0,
+          "integer": false
+        },
+        "attemptDurationMinutes": {
+          "exclusiveMinimum": 0,
+          "integer": false
+        },
+        "estimatedRaceMinutes": {
+          "exclusiveMinimum": 0,
+          "integer": false
+        }
+      },
+      "options": {
+        "assists": [
+          "0",
+          "1",
+          "2"
+        ],
+        "registration": [
+          "open_until_capacity",
+          "application_review",
+          "locked_roster"
+        ],
+        "raceFormats": [
+          "SINGLE_RACE",
+          "REVERSE_GRID_DOUBLE_RACE"
+        ],
+        "raceAggregation": {
+          "SINGLE_RACE": [
+            "ONLY_RACE"
+          ],
+          "REVERSE_GRID_DOUBLE_RACE": [
+            "SUM_POINTS"
+          ]
+        },
+        "elimination": [
+          "SINGLE",
+          "DOUBLE"
+        ],
+        "pairing": [
+          "SEEDED",
+          "RANDOM"
+        ],
+        "scoring": [
+          "none",
+          "classic_top_10"
+        ],
+        "rating": [
+          "none",
+          "result"
+        ]
+      },
+      "enabled": true,
+      "reason": null
+    },
+    {
+      "code": "double_elimination_tournament",
+      "title": "Турнир",
+      "gameCode": "assetto_corsa",
+      "sections": [
+        "format",
+        "program",
+        "conditions",
+        "participants",
+        "description",
+        "review"
+      ],
+      "components": [
+        "content",
+        "tournament",
+        "registration",
+        "admission",
+        "rating",
+        "schedule",
+        "description",
+        "presentation"
+      ],
+      "minimumParticipantsPath": "minimumParticipants",
+      "registrationWindow": true,
+      "defaults": {
+        "event": {
+          "organizerId": "",
+          "title": "Турнир",
+          "description": null,
+          "timezone": "",
+          "gameCode": "assetto_corsa",
+          "disciplineCode": "circuit"
+        },
+        "game": {
+          "track": {
+            "code": "",
+            "layoutCode": null
+          },
+          "cars": {
+            "allowedCarIds": [
+              ""
+            ],
+            "defaultCarId": ""
+          },
+          "environment": {
+            "sunAngle": 32,
+            "weather": {
+              "mode": "FIXED",
+              "presetCode": "3_clear",
+              "ambientTemperature": 22,
+              "roadTemperature": 30,
+              "ambientVariation": 2,
+              "roadVariation": 3
+            },
+            "dynamicTrack": {
+              "sessionStart": 96,
+              "randomness": 2,
+              "sessionTransfer": 80,
+              "lapGain": 10
+            }
+          },
+          "assists": {
+            "absAllowed": 1,
+            "tractionControlAllowed": 1,
+            "stabilityAllowed": false,
+            "forceVirtualMirror": false
+          },
+          "simulation": {
+            "tyreWearRatePercent": 100,
+            "fuelRatePercent": 100,
+            "damageMultiplierPercent": 100,
+            "allowedTyresOut": 2,
+            "legalTyres": []
+          },
+          "finishRules": {
+            "qualifyingMaximumWaitPercent": 120,
+            "raceOverTimeSeconds": 180
+          },
+          "catalogChoices": {
+            "weatherCodes": [],
+            "pluginCodes": []
+          }
+        },
+        "entry": {
+          "type": "DIRECT_REGISTRATION",
+          "registration": {
+            "mode": "open_until_capacity"
+          },
+          "qualification": {
+            "availability": {
+              "startsAt": "",
+              "endsAt": ""
+            },
+            "game": {
+              "track": {
+                "code": "",
+                "layoutCode": null
+              },
+              "cars": {
+                "allowedCarIds": [
+                  ""
+                ],
+                "defaultCarId": ""
+              },
+              "environment": {
+                "sunAngle": 32,
+                "weather": {
+                  "mode": "FIXED",
+                  "presetCode": "3_clear",
+                  "ambientTemperature": 22,
+                  "roadTemperature": 30,
+                  "ambientVariation": 2,
+                  "roadVariation": 3
+                },
+                "dynamicTrack": {
+                  "sessionStart": 96,
+                  "randomness": 2,
+                  "sessionTransfer": 80,
+                  "lapGain": 10
+                }
+              },
+              "assists": {
+                "absAllowed": 1,
+                "tractionControlAllowed": 1,
+                "stabilityAllowed": false,
+                "forceVirtualMirror": false
+              },
+              "simulation": {
+                "tyreWearRatePercent": 100,
+                "fuelRatePercent": 100,
+                "damageMultiplierPercent": 100,
+                "allowedTyresOut": 2,
+                "legalTyres": []
+              },
+              "finishRules": {
+                "qualifyingMaximumWaitPercent": 120,
+                "raceOverTimeSeconds": 180
+              },
+              "catalogChoices": {
+                "weatherCodes": [],
+                "pluginCodes": []
+              }
+            },
+            "timeAttack": {
+              "attemptDurationMinutes": 20,
+              "attemptLimit": 3
+            }
+          }
+        },
+        "bracketSize": 16,
+        "minimumParticipants": 2,
+        "elimination": "DOUBLE",
+        "initialPairing": "SEEDED",
+        "match": {
+          "winsTo": 1,
+          "maximumOmtRounds": 3,
+          "runtimeTimeLimitMinutes": 10
+        },
+        "resetGrandFinalIfLowerBracketWins": true,
+        "schedule": {
+          "firstBlockStartsAt": ""
+        },
+        "rating": {
+          "mode": "result",
+          "pilotMultiplier": 1,
+          "safetyMultiplier": 1
+        },
+        "authoring": {
+          "presetId": "club-racing",
+          "version": 2,
+          "editorVersion": 2
+        },
+        "registrationRules": {
+          "closesBeforeMinutes": 3,
+          "durationMinutes": 1440
+        },
+        "participantAdmission": {
+          "minimumPilotLicense": "D",
+          "minimumSafetyLicense": "D"
+        }
+      },
+      "raceOverrideFields": [
+        "practice",
+        "qualifying",
+        "race",
+        "estimatedRaceMinutes"
+      ],
+      "windowDefaultMinutes": 1440,
+      "admissionTypes": [
+        "OPEN",
+        "EVENT_REGISTRATION",
+        "TIME_ATTACK_QUALIFICATION"
+      ],
+      "entryTypes": [
+        "DIRECT_REGISTRATION",
+        "TIME_ATTACK_QUALIFICATION"
+      ],
+      "carChangePolicies": [
+        "reset_points",
+        "free"
+      ],
+      "licenses": [
+        "D",
+        "C",
+        "B",
+        "A"
+      ],
+      "practiceMinimumParticipants": 0,
+      "raceDefaults": null,
+      "practiceDefaults": {
+        "durationMinutes": 20,
+        "maxParticipants": 24
+      },
+      "constraints": {
+        "absAllowed": {
+          "minimum": 0,
+          "maximum": 2,
+          "integer": true
+        },
+        "tractionControlAllowed": {
+          "minimum": 0,
+          "maximum": 2,
+          "integer": true
+        },
+        "allowedTyresOut": {
+          "minimum": -1,
+          "maximum": 1000,
+          "integer": true
+        },
+        "qualifyingMaximumWaitPercent": {
+          "minimum": 0,
+          "maximum": 1000,
+          "integer": true
+        },
+        "raceOverTimeSeconds": {
+          "minimum": 0,
+          "maximum": 86400,
+          "integer": true
+        },
+        "maxPlayersPerSession": {
+          "minimum": 1,
+          "integer": true
+        },
+        "maxSessions": {
+          "minimum": 1,
+          "integer": true
+        },
+        "reverseGridPositions": {
+          "minimum": 1,
+          "integer": true
+        },
+        "laps": {
+          "minimum": 1,
+          "integer": true
+        },
+        "maxParticipants": {
+          "minimum": 1,
+          "integer": true
+        },
+        "attemptLimit": {
+          "minimum": 1,
+          "integer": true
+        },
+        "durationMinutes": {
+          "minimum": 0,
+          "integer": false
+        },
+        "attemptDurationMinutes": {
+          "exclusiveMinimum": 0,
+          "integer": false
+        },
+        "estimatedRaceMinutes": {
+          "exclusiveMinimum": 0,
+          "integer": false
+        }
+      },
+      "options": {
+        "assists": [
+          "0",
+          "1",
+          "2"
+        ],
+        "registration": [
+          "open_until_capacity",
+          "application_review",
+          "locked_roster"
+        ],
+        "raceFormats": [],
+        "raceAggregation": {
+          "SINGLE_RACE": [
+            "ONLY_RACE"
+          ],
+          "REVERSE_GRID_DOUBLE_RACE": [
+            "SUM_POINTS"
+          ]
+        },
+        "elimination": [
+          "SINGLE",
+          "DOUBLE"
+        ],
+        "pairing": [
+          "SEEDED",
+          "RANDOM"
+        ],
+        "scoring": [
+          "none",
+          "classic_top_10"
+        ],
+        "rating": [
+          "none",
+          "result"
+        ]
+      },
+      "enabled": true,
+      "reason": null
+    }
+  ]
+}

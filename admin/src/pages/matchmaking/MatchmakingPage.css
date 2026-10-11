@@ -1,0 +1,13 @@
+.matchmaking-settings .authoring-field-grid { grid-template-columns: repeat(auto-fit,minmax(180px,240px)); gap:12px; }
+.matchmaking-settings .MuiFormControl-root:has(input[type="number"]) { width:220px; max-width:100%; }
+.matchmaking-settings .weather-numeric-fields { grid-template-columns:repeat(auto-fit,minmax(180px,240px)); gap:12px; }
+.matchmaking-settings .MuiAccordionDetails-root { padding:12px 16px; }
+.matchmaking-analytics { max-width:960px; padding:12px 0 24px; }
+.matchmaking-metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; padding:20px 0 28px; margin-bottom:28px; border-bottom:1px solid rgba(128,140,160,.2); }
+.matchmaking-metrics .matchmaking-metric-value { font-size:32px; font-weight:650; font-variant-numeric:tabular-nums; line-height:1.3; }
+.matchmaking-outcome { display:grid; grid-template-columns:180px 1fr 90px; align-items:center; gap:20px; }
+.matchmaking-outcome-track { height:7px; overflow:hidden; border-radius:4px; background:rgba(128,140,160,.12); }
+.matchmaking-condition-stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:40px; margin:32px 0; padding:24px 0; border-block:1px solid rgba(128,140,160,.2); }
+@media(max-width:600px) { .matchmaking-condition-stats { grid-template-columns:1fr; gap:24px; } }
+@media(max-width:600px) { .matchmaking-metrics { gap:12px; } .matchmaking-metrics .matchmaking-metric-value { font-size:26px; } .matchmaking-outcome { grid-template-columns:1fr 80px; gap:8px; } .matchmaking-outcome-track { grid-row:2; grid-column:1/-1; } }
+.mm-match-details{padding:20px}.mm-match-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;margin-bottom:24px}.mm-match-facts small,.mm-match-heat small{display:block;font-size:11px;margin-bottom:5px}.mm-match-facts strong{font-size:13px;font-weight:500;overflow-wrap:anywhere}.mm-match-round{margin-top:20px}.mm-match-heat{display:grid;grid-template-columns:110px 1fr 1fr 1.4fr;gap:16px;border-top:1px solid;padding:12px 0;margin-top:8px;font-size:13px}@media(max-width:800px){.mm-match-facts{grid-template-columns:1fr 1fr}.mm-match-heat{grid-template-columns:1fr 1fr}}
