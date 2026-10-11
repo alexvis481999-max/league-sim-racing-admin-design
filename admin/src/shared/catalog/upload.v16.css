@@ -1,0 +1,36 @@
+/* Catalogue-only upload and tag controls (v16). Used by the game catalogue and skins. */
+.lsr-dropzone { border: 1px dashed #cdd6e2; border-radius: 10px; background: #fafbfd; padding: 16px 18px; display: grid; gap: 10px; transition: border-color .14s ease, background-color .14s ease; }
+.lsr-dropzone.is-dragging { border-color: var(--lsr-blue); background: var(--lsr-soft); }
+.lsr-dropzone.is-complete { border-color: #b9dfc9; background: #f4fbf7; }
+.lsr-dropzone.is-error { border-color: #e9bab4; background: #fffafa; }
+.lsr-dropzone.is-disabled { opacity: .7; }
+.lsr-dropzone-row { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.lsr-dropzone-icon { flex: none; width: 38px; height: 38px; border-radius: 9px; display: grid; place-items: center; background: #eef1f5; color: #64748a; font-size: 17px; font-weight: 700; }
+.lsr-dropzone.is-complete .lsr-dropzone-icon { background: #e3f3ea; color: var(--lsr-green); }
+.lsr-dropzone.is-dragging .lsr-dropzone-icon { background: #dfe8ff; color: var(--lsr-blue); }
+.lsr-dropzone-text { min-width: 0; flex: 1; }
+.lsr-dropzone-text b { display: block; font-size: 13px; color: var(--lsr-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lsr-dropzone-text small { display: block; font-size: 12px; color: var(--lsr-sub); margin-top: 2px; }
+.lsr-dropzone-state { font-size: 12px; font-weight: 650; color: var(--lsr-sub); }
+.lsr-dropzone-state.is-done { color: var(--lsr-green); }
+.lsr-dropzone-state.is-live { color: var(--lsr-blue); }
+.lsr-progress { height: 7px; border-radius: 20px; background: #e8edf4; overflow: hidden; }
+.lsr-progress > span { display: block; height: 100%; background: #4d7add; transition: width .2s ease; }
+.lsr-progress.is-indeterminate > span { width: 35%; animation: lsr-progress-slide 1.2s ease-in-out infinite; }
+@keyframes lsr-progress-slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
+@media (prefers-reduced-motion: reduce) { .lsr-progress.is-indeterminate > span { animation: none; } }
+@media (max-width: 560px) { .lsr-dropzone-row { flex-wrap: wrap; } }
+
+.lsr-tageditor { display: grid; gap: 8px; min-width: 0; }
+.lsr-tag-suggest { display: flex; flex-wrap: wrap; gap: 6px; }
+.lsr-tag-suggest button { border: 1px solid var(--lsr-line); background: #fff; border-radius: 7px; padding: 4px 9px; color: var(--lsr-sub); font-size: 12px; font-weight: 650; }
+.lsr-tag-suggest button:hover:not(:disabled) { border-color: #d4e1fb; color: var(--lsr-blue); background: #ecf3ff; }
+.lsr-tag-suggest button span { margin-right: 3px; }
+.lsr-tageditor .lsr-field-label { font-size: 12px; font-weight: 680; color: var(--lsr-text); }
+.lsr-tagbox { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 38px; border: 1px solid #d5dce6; border-radius: 8px; background: #fff; padding: 5px 8px; }
+.lsr-tagbox:focus-within { border-color: #9dbbf7; box-shadow: 0 0 0 3px #e3ecfd; }
+.lsr-tagbox.is-disabled { background: #f2f4f7; }
+.lsr-tagbox input { flex: 1; min-width: 120px; border: 0; outline: 0; padding: 4px 2px; background: transparent; color: var(--lsr-ink); font: inherit; }
+.lsr-tagchip { display: inline-flex; align-items: center; gap: 4px; background: #f1f4f9; color: #44546b; border-radius: 6px; padding: 3px 4px 3px 8px; font-size: 12px; font-weight: 680; }
+.lsr-tagchip button { border: 0; background: transparent; color: #8593a6; font-size: 14px; line-height: 1; padding: 0 3px; border-radius: 4px; }
+.lsr-tagchip button:hover:not(:disabled) { color: var(--lsr-red); background: #fff1ef; }

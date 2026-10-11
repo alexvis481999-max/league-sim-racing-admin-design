@@ -1,0 +1,4 @@
+/* Skins (catalogue kind=skin). Shares the catalogue module classes (catalog.v16.css); only skin-specific pieces live here. */
+.lsr-skin-preview { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 9px; border: 1px solid var(--lsr-line); background: #eef1f5; display: grid; place-items: center; color: #8996a8; font-size: 12px; }
+.lsr-skin-history td .lsr-btn { margin-left: 8px; }
+.lsr-skin-moderation { display: grid; gap: 12px; }

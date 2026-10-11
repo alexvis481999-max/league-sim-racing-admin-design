@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ArchiveDropZone } from '../shared/ArchiveDropZone';
 import type { CatalogItem } from '../shared/types';
 import { CatalogPage } from './catalog/CatalogPage';
-import { SkinsPage } from './skins/SkinsPage';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 const { apiFetch, apiUploadFormData, apiDownload } = vi.hoisted(() => ({
   apiFetch: vi.fn(),
@@ -23,6 +23,8 @@ vi.mock('../shared/api', async () => {
     apiDownload,
   };
 });
+
+vi.mock('../shared/realtime', () => ({ useRealtimeRefresh: () => {} }));
 
 let catalogItems: CatalogItem[] = [];
 
@@ -46,7 +48,7 @@ beforeEach(() => {
   });
 });
 
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe('ArchiveDropZone', () => {
   it('accepts a ZIP by drag and drop', async () => {
@@ -73,45 +75,41 @@ describe('ArchiveDropZone', () => {
   });
 });
 
-describe('SkinsPage upload dialog', () => {
+describe('Skin upload page', () => {
   it('parses the title from ZIP and keeps upload disabled until a car is selected', async () => {
     const user = userEvent.setup();
-    render(<SkinsPage />);
-    await user.click(await screen.findByRole('button', { name: 'Добавить' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Добавить скин' });
-    const addButton = within(dialog).getByRole('button', { name: 'Добавить' });
+    renderAt('/media-catalog/new?kind=skin');
+    await screen.findByRole('heading', { name: 'Добавить скин' });
+    const addButton = screen.getByRole('button', { name: 'Добавить скин' });
     expect((addButton as HTMLButtonElement).disabled).toBe(true);
 
     const file = await skinArchive('Parsed Team Name');
-    await user.upload(dialog.querySelector('input[type="file"]') as HTMLInputElement, file);
+    await user.upload(document.querySelector('input[type="file"]') as HTMLInputElement, file);
 
     await waitFor(() => {
-      expect((within(dialog).getByLabelText('Название') as HTMLInputElement).value)
-        .toBe('Parsed Team Name');
+      expect((screen.getByLabelText('Название') as HTMLInputElement).value).toBe('Parsed Team Name');
     });
     expect((addButton as HTMLButtonElement).disabled).toBe(true);
-    expect(within(dialog).getByText('Архив проверен и готов к загрузке')).toBeTruthy();
+    expect(screen.getByText('Архив проверен и готов к загрузке')).toBeTruthy();
   });
 
   it('discards the local skin draft on cancel without uploading anything', async () => {
     const user = userEvent.setup();
-    render(<SkinsPage />);
-    await user.click(await screen.findByRole('button', { name: 'Добавить' }));
-    let dialog = await screen.findByRole('dialog', { name: 'Добавить скин' });
+    renderAt('/media-catalog/new?kind=skin');
+    await screen.findByRole('heading', { name: 'Добавить скин' });
     const file = await skinArchive('Discarded Draft');
-    await user.upload(dialog.querySelector('input[type="file"]') as HTMLInputElement, file);
-    await waitFor(() => expect(
-      (within(dialog).getByLabelText('Название') as HTMLInputElement).value,
-    ).toBe('Discarded Draft'));
+    await user.upload(document.querySelector('input[type="file"]') as HTMLInputElement, file);
+    await waitFor(() => expect((screen.getByLabelText('Название') as HTMLInputElement).value).toBe('Discarded Draft'));
 
-    await user.click(within(dialog).getByRole('button', { name: 'Отмена' }));
+    await user.click(screen.getByRole('button', { name: 'Отменить' }));
     expect(apiUploadFormData).not.toHaveBeenCalled();
-    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Добавить скин' })).toBeNull());
+    await screen.findByRole('heading', { name: 'Игровой каталог' });
+    expect(screen.getByRole('tab', { name: 'Скины' }).getAttribute('aria-selected')).toBe('true');
 
-    await user.click(screen.getByRole('button', { name: 'Добавить' }));
-    dialog = await screen.findByRole('dialog', { name: 'Добавить скин' });
-    expect((within(dialog).getByLabelText('Название') as HTMLInputElement).value).toBe('');
-    expect((dialog.querySelector('input[type="file"]') as HTMLInputElement).files).toHaveLength(0);
+    await user.click(screen.getByRole('button', { name: /Добавить материал/ }));
+    await screen.findByRole('heading', { name: 'Добавить скин' });
+    expect((screen.getByLabelText('Название') as HTMLInputElement).value).toBe('');
+    expect((document.querySelector('input[type="file"]') as HTMLInputElement).files).toHaveLength(0);
   });
 });
 
@@ -123,21 +121,17 @@ describe('CatalogPage draft upload', () => {
       onProgress?.({ percent: 35 });
       return new Promise((resolve) => { finishUpload = resolve; });
     });
-    render(<CatalogPage access={{
-      userId: '1',
-      panelAccess: true,
-      grants: [{ id: '1', roleCode: 'platform_owner', scopeType: 'platform' as const, scopeId: null, validFrom: null, validTo: null, constraints: null, permissions: ['catalog.manage.all'] }],
-    }} />);
+    renderAt('/media-catalog');
 
     await user.click(await screen.findByRole('tab', { name: 'Машины' }));
-    await user.click(screen.getByRole('button', { name: /Добавить/ }));
-    const dialog = await screen.findByRole('dialog', { name: /Добавить: Машины/ });
+    await user.click(screen.getByRole('button', { name: /Добавить материал/ }));
+    await screen.findByRole('heading', { name: 'Добавить: Машины' });
     const file = new File(['archive'], 'nissan_gtr.zip', { type: 'application/zip' });
-    await user.upload(dialog.querySelector('input[type="file"]') as HTMLInputElement, file);
+    await user.upload(archiveInput(), file);
 
-    expect((within(dialog).getByRole('button', { name: 'Сохранить' }) as HTMLButtonElement).disabled)
-      .toBe(true);
-    expect(within(dialog).getByRole('progressbar').getAttribute('aria-valuenow')).toBe('35');
+    expect((screen.getByRole('button', { name: 'Сохранить' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByRole('progressbar').getAttribute('aria-valuenow')).toBe('35');
+    expect((screen.getByLabelText('Код') as HTMLInputElement).value).toBe('nissan_gtr');
     finishUpload({
       id: '11111111-1111-4111-8111-111111111111',
       status: 'uploaded',
@@ -150,10 +144,10 @@ describe('CatalogPage draft upload', () => {
     });
 
     await waitFor(() => {
-      expect(within(dialog).getByText('Архив загружен')).toBeTruthy();
+      expect(screen.getByText('Архив загружен')).toBeTruthy();
     });
 
-    await user.click(within(dialog).getByRole('button', { name: 'Отмена' }));
+    await user.click(screen.getByRole('button', { name: 'Отменить' }));
     await waitFor(() => {
       expect(apiFetch).toHaveBeenCalledWith(
         '/admin/content-upload-sessions/11111111-1111-4111-8111-111111111111',
@@ -165,23 +159,16 @@ describe('CatalogPage draft upload', () => {
   it('keeps Save disabled and shows an error when draft upload fails', async () => {
     const user = userEvent.setup();
     apiUploadFormData.mockRejectedValueOnce(new Error('S3 unavailable'));
-    render(<CatalogPage access={{
-      userId: '1',
-      panelAccess: true,
-      grants: [{ id: '1', roleCode: 'platform_owner', scopeType: 'platform' as const, scopeId: null, validFrom: null, validTo: null, constraints: null, permissions: ['catalog.manage.all'] }],
-    }} />);
+    renderAt('/media-catalog?kind=car');
 
-    await user.click(await screen.findByRole('tab', { name: 'Машины' }));
-    await user.click(screen.getByRole('button', { name: /Добавить/ }));
-    const dialog = await screen.findByRole('dialog', { name: /Добавить: Машины/ });
-    const file = new File(['archive'], 'broken.zip', { type: 'application/zip' });
-    await user.upload(dialog.querySelector('input[type="file"]') as HTMLInputElement, file);
+    await user.click(await screen.findByRole('button', { name: /Добавить материал/ }));
+    await screen.findByRole('heading', { name: 'Добавить: Машины' });
+    await user.upload(archiveInput(), new File(['archive'], 'broken.zip', { type: 'application/zip' }));
 
     await waitFor(() => expect(
-      within(dialog).getAllByRole('alert').some((alert) => alert.textContent?.includes('S3 unavailable')),
+      screen.getAllByRole('alert').some((alert) => alert.textContent?.includes('S3 unavailable')),
     ).toBe(true));
-    expect((within(dialog).getByRole('button', { name: 'Сохранить' }) as HTMLButtonElement).disabled)
-      .toBe(true);
+    expect((screen.getByRole('button', { name: 'Сохранить' }) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('shows a client validation error before creating catalog content', async () => {
@@ -189,38 +176,59 @@ describe('CatalogPage draft upload', () => {
     apiUploadFormData.mockResolvedValue(uploadSession('track-upload'));
     renderCatalog('track');
 
-    await user.click(await screen.findByRole('button', { name: /Добавить/ }));
-    const dialog = await screen.findByRole('dialog', { name: /Добавить: Трассы/ });
-    await user.upload(
-      dialog.querySelector('input[type="file"]') as HTMLInputElement,
-      new File(['track'], 'track.zip', { type: 'application/zip' }),
-    );
+    await user.click(await screen.findByRole('button', { name: /Добавить материал/ }));
+    await screen.findByRole('heading', { name: 'Добавить: Трассы' });
+    await user.upload(archiveInput(), new File(['track'], 'track.zip', { type: 'application/zip' }));
     await screen.findByText('Архив загружен');
-    await user.click(within(dialog).getByRole('button', { name: 'Сохранить' }));
+    await user.click(screen.getByRole('button', { name: 'Сохранить' }));
 
-    expect(within(dialog).getByRole('alert').textContent).toContain('Добавь тег игры');
+    expect(screen.getAllByRole('alert').some((alert) => alert.textContent?.includes('Добавь тег игры'))).toBe(true);
     expect(apiFetch).not.toHaveBeenCalledWith('/admin/catalog/items', expect.anything());
+  });
+
+  it('creates a card only after confirming the upload and sends the asset ID with an idempotency key', async () => {
+    const user = userEvent.setup();
+    apiUploadFormData.mockResolvedValue(uploadSession('plugin-upload'));
+    apiFetch.mockImplementation(async (path: string) => {
+      if (path.startsWith('/admin/catalog/items?')) return { items: [], nextAfterId: null };
+      if (path.startsWith('/admin/catalog/tags?')) return [];
+      if (path === '/admin/content-upload-sessions/plugin-upload/confirm') return { session: uploadSession('plugin-upload'), asset: contentAsset('plugin-asset', 'reporter.zip', 'archive') };
+      if (path === '/admin/catalog/items') return catalogItem({ kind: 'plugin', id: 'plugin-1' });
+      return [];
+    });
+    renderAt('/media-catalog/new?kind=plugin');
+
+    await screen.findByRole('heading', { name: 'Добавить: Плагины' });
+    await user.upload(archiveInput(), new File(['zip'], 'session_reporter.zip', { type: 'application/zip' }));
+    await screen.findByText('Архив загружен');
+    await user.click(screen.getByRole('button', { name: 'ac' }));
+    await user.click(screen.getByRole('button', { name: 'Сохранить' }));
+
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith('/admin/catalog/items', expect.objectContaining({ method: 'POST' })));
+    const calls = apiFetch.mock.calls.map(([path]) => path);
+    expect(calls.indexOf('/admin/content-upload-sessions/plugin-upload/confirm')).toBeLessThan(calls.indexOf('/admin/catalog/items'));
+    const create = apiFetch.mock.calls.find(([path]) => path === '/admin/catalog/items')!;
+    expect(JSON.parse(String(create[1].body))).toMatchObject({ kind: 'plugin', code: 'session_reporter', archiveAssetId: 'plugin-asset', gameCode: 'assetto_corsa', tags: ['ac'] });
+    expect(new Headers(create[1].headers).get('Idempotency-Key')).toBeTruthy();
+    await screen.findByRole('heading', { name: 'Игровой каталог' });
   });
 
   it('surfaces a daemon/shared installation failure on an existing track', async () => {
     const user = userEvent.setup();
     catalogItems = [catalogItem({ installStatus: 'failed', sharedStatus: 'failed', installError: 'daemon offline' })];
     apiFetch.mockImplementation(async (path: string) => {
-      if (path.startsWith('/skins/admin?')) return { items: [], nextAfterId: null };
       if (path.startsWith('/admin/catalog/items?')) return { items: catalogItems, nextAfterId: null };
       if (path.startsWith('/admin/catalog/tags?')) return [];
-      if (path === '/admin/access/organizers' || path === '/admin/catalog/car-brands' || path.startsWith('/admin/catalog/official-dlcs?')) return [];
       if (path.endsWith('/install-shared')) throw new Error('daemon offline');
       return [];
     });
     renderCatalog('track');
 
-    await user.click(await screen.findByRole('button', { name: /Test Track/ }));
-    const dialog = await screen.findByRole('dialog', { name: /Редактировать: Test Track/ });
-    await user.click(within(dialog).getByRole('button', { name: 'Установить' }));
+    await openRow('Test Track');
+    await user.click(screen.getByRole('button', { name: 'Установить' }));
 
     await waitFor(() => expect(
-      within(dialog).getAllByRole('alert').some((alert) => alert.textContent?.includes('daemon offline')),
+      screen.getAllByRole('alert').some((alert) => alert.textContent?.includes('daemon offline')),
     ).toBe(true));
   });
 
@@ -230,10 +238,8 @@ describe('CatalogPage draft upload', () => {
     catalogItems = [existing];
     apiUploadFormData.mockResolvedValue(uploadSession('replacement-upload'));
     apiFetch.mockImplementation(async (path: string, options?: RequestInit) => {
-      if (path.startsWith('/skins/admin?')) return { items: [], nextAfterId: null };
       if (path.startsWith('/admin/catalog/items?')) return { items: catalogItems, nextAfterId: null };
       if (path.startsWith('/admin/catalog/tags?')) return ['ac'];
-      if (path === '/admin/access/organizers' || path === '/admin/catalog/car-brands' || path.startsWith('/admin/catalog/official-dlcs?')) return [];
       if (path === '/admin/content-upload-sessions/replacement-upload/confirm') {
         return { session: uploadSession('replacement-upload'), asset: contentAsset('new-archive', 'replacement.zip', 'archive') };
       }
@@ -246,14 +252,10 @@ describe('CatalogPage draft upload', () => {
     });
     renderCatalog('track');
 
-    await user.click(await screen.findByRole('button', { name: /Test Track/ }));
-    const dialog = await screen.findByRole('dialog', { name: /Редактировать: Test Track/ });
-    await user.upload(
-      dialog.querySelector('input[type="file"]') as HTMLInputElement,
-      new File(['replacement'], 'replacement.zip', { type: 'application/zip' }),
-    );
+    await openRow('Test Track');
+    await user.upload(archiveInput(), new File(['replacement'], 'replacement.zip', { type: 'application/zip' }));
     await screen.findByText('Архив загружен');
-    await user.click(within(dialog).getByRole('button', { name: 'Сохранить' }));
+    await user.click(screen.getByRole('button', { name: 'Сохранить изменения' }));
 
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(
       `/admin/catalog/items/${existing.id}/versions`,
@@ -262,6 +264,9 @@ describe('CatalogPage draft upload', () => {
         body: expect.stringContaining('"archiveAssetId":"new-archive"'),
       }),
     ));
+    await waitFor(() => expect(apiFetch.mock.calls.some(([path, init]) => path === `/admin/catalog/items/${existing.id}` && init?.method === 'PATCH')).toBe(true));
+    const patch = apiFetch.mock.calls.find(([path, init]) => path === `/admin/catalog/items/${existing.id}` && init?.method === 'PATCH')!;
+    expect(JSON.parse(String(patch[1].body)).expectedVersion).toBe(2);
     expect(apiFetch).not.toHaveBeenCalledWith(
       `/admin/catalog/items/${existing.id}/install-shared`,
       expect.objectContaining({ method: 'POST' }),
@@ -278,10 +283,8 @@ describe('CatalogPage draft upload', () => {
     apiUploadFormData.mockResolvedValue(uploadSession('preview-upload', 'image'));
     const updated = { ...existing, primaryImageAssetId: 'new-preview', primaryImageAsset: contentAsset('new-preview', 'new.webp', 'image') };
     apiFetch.mockImplementation(async (path: string, options?: RequestInit) => {
-      if (path.startsWith('/skins/admin?')) return { items: [], nextAfterId: null };
       if (path.startsWith('/admin/catalog/items?')) return { items: catalogItems, nextAfterId: null };
       if (path.startsWith('/admin/catalog/tags?')) return ['ac'];
-      if (path === '/admin/access/organizers' || path === '/admin/catalog/car-brands' || path.startsWith('/admin/catalog/official-dlcs?')) return [];
       if (path === '/admin/content-upload-sessions/preview-upload/confirm') {
         return { session: uploadSession('preview-upload', 'image'), asset: contentAsset('new-preview', 'new.webp', 'image') };
       }
@@ -295,9 +298,8 @@ describe('CatalogPage draft upload', () => {
     });
     renderCatalog('track');
 
-    await user.click(await screen.findByRole('button', { name: /Test Track/ }));
-    let dialog = await screen.findByRole('dialog', { name: /Редактировать: Test Track/ });
-    const imageInput = [...dialog.querySelectorAll('input[type="file"]')]
+    await openRow('Test Track');
+    const imageInput = [...document.querySelectorAll('input[type="file"]')]
       .find((input) => input.getAttribute('accept')?.includes('image/png')) as HTMLInputElement;
     await user.upload(imageInput, new File(['image'], 'new.webp', { type: 'image/webp' }));
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(
@@ -305,8 +307,7 @@ describe('CatalogPage draft upload', () => {
       expect.objectContaining({ body: expect.stringContaining('"primaryImageAssetId":"new-preview"') }),
     ));
 
-    dialog = await screen.findByRole('dialog', { name: /Редактировать: Test Track/ });
-    await user.click(within(dialog).getByRole('button', { name: 'Удалить фото' }));
+    await user.click(await screen.findByRole('button', { name: 'Удалить фото' }));
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(
       `/admin/catalog/items/${existing.id}`,
       expect.objectContaining({ body: expect.stringContaining('"primaryImageAssetId":null') }),
@@ -324,10 +325,6 @@ describe('CatalogPage draft upload', () => {
       if (path === '/admin/content-upload-sessions') return uploadSession('zones-upload', 'touge_zones');
       throw new Error(`unexpected upload ${path}`);
     });
-    apiDownload.mockResolvedValue({
-      blob: new Blob(['{}'], { type: 'application/json' }),
-      fileName: 'test_track-gp-touge-zones.json',
-    });
     Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:test') });
     Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: vi.fn() });
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
@@ -335,17 +332,14 @@ describe('CatalogPage draft upload', () => {
     apiFetch.mockImplementation(async (path: string, options?: RequestInit) => {
       if (path === '/admin/content-upload-sessions/zones-upload/confirm') return { asset: { id: '88' } };
       if (path.endsWith('/layouts/gp/touge-zones')) return options?.method === 'POST' ? updated : { url: 'https://storage.test/zones.json', fileName: 'touge-zones.json' };
-      if (path.startsWith('/skins/admin?')) return { items: [], nextAfterId: null };
       if (path.startsWith('/admin/catalog/items?')) return { items: catalogItems, nextAfterId: null };
       if (path.startsWith('/admin/catalog/tags?')) return ['ac'];
-      if (path === '/admin/access/organizers' || path === '/admin/catalog/car-brands' || path.startsWith('/admin/catalog/official-dlcs?')) return [];
       return [];
     });
     renderCatalog('track');
 
-    await user.click(await screen.findByRole('button', { name: /Test Track/ }));
-    const dialog = await screen.findByRole('dialog', { name: /Редактировать: Test Track/ });
-    const zonesInput = [...dialog.querySelectorAll('input[type="file"]')]
+    await openRow('Test Track');
+    const zonesInput = [...document.querySelectorAll('input[type="file"]')]
       .find((input) => input.getAttribute('accept')?.includes('application/json')) as HTMLInputElement;
     await user.upload(zonesInput, new File(['{}'], 'touge-zones.json', { type: 'application/json' }));
     await waitFor(() => expect(apiUploadFormData).toHaveBeenCalledWith(
@@ -355,7 +349,7 @@ describe('CatalogPage draft upload', () => {
 
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(`/admin/catalog/items/${existing.id}/layouts/gp/touge-zones`, expect.objectContaining({ method: 'POST', body: JSON.stringify({ expectedVersion: 1, assetId: '88' }) })));
 
-    await user.click(within(dialog).getByRole('button', { name: 'Скачать конфиг' }));
+    await user.click(screen.getByRole('button', { name: 'Скачать конфиг' }));
     await waitFor(() => expect(fetch).toHaveBeenCalledWith('https://storage.test/zones.json'));
     vi.unstubAllGlobals();
   });
@@ -374,25 +368,24 @@ describe('CatalogPage draft upload', () => {
       carBrandCode: kind === 'car' ? 'nissan' : null,
     });
     catalogItems = [existing];
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
     apiFetch.mockImplementation(async (path: string) => {
       if (path.startsWith('/skins/admin?')) return { items: [], nextAfterId: null };
       if (path.startsWith('/admin/catalog/items?')) return { items: catalogItems, nextAfterId: null };
       if (path.startsWith('/admin/catalog/tags?')) return ['ac'];
       if (path === '/admin/catalog/car-brands') return [{ code: 'nissan', title: 'Nissan', region: 'asian' }];
-      if (path === '/admin/access/organizers' || path.startsWith('/admin/catalog/official-dlcs?')) return [];
       if (path === `/admin/catalog/items/${existing.id}`) return { deleted: true };
       return [];
     });
     renderCatalog(kind);
 
-    await user.click(await screen.findByRole('button', { name: new RegExp(title) }));
-    const dialog = await screen.findByRole('dialog', { name: new RegExp(`Редактировать: ${title}`) });
-    await user.click(within(dialog).getByRole('button', { name: 'Удалить' }));
+    await openRow(title);
+    await user.click(screen.getByRole('button', { name: 'Удалить' }));
+    const confirm = await screen.findByRole('dialog', { name: 'Убрать из нового выбора?' });
+    await user.click(within(confirm).getByRole('button', { name: 'Удалить материал' }));
 
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(
       `/admin/catalog/items/${existing.id}`,
-      { method: 'DELETE', body: JSON.stringify({ expectedVersion: 1 }) },
+      expect.objectContaining({ method: 'DELETE', body: JSON.stringify({ expectedVersion: 1 }) }),
     ));
   });
 
@@ -413,35 +406,74 @@ describe('CatalogPage draft upload', () => {
       }],
     });
     catalogItems = [existing];
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
     apiFetch.mockImplementation(async (path: string) => {
-      if (path.startsWith('/skins/admin?')) return { items: [], nextAfterId: null };
       if (path.startsWith('/admin/catalog/items?')) return { items: catalogItems, nextAfterId: null };
       if (path.startsWith('/admin/catalog/tags?')) return ['ac'];
-      if (path === '/admin/access/organizers' || path === '/admin/catalog/car-brands' || path.startsWith('/admin/catalog/official-dlcs?')) return [];
       if (path === `/admin/catalog/items/${existing.id}`) throw new Error('catalog_item_in_use');
       return [];
     });
     renderCatalog('track');
 
-    await user.click(await screen.findByRole('button', { name: /Test Track/ }));
-    const dialog = await screen.findByRole('dialog', { name: /Редактировать: Test Track/ });
-    await user.click(within(dialog).getByRole('button', { name: 'Удалить' }));
+    await openRow('Test Track');
+    expect(screen.getByText(/Race 91/)).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Удалить' }));
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Удалить материал' }));
 
     await waitFor(() => expect(
-      within(dialog).getAllByRole('alert').some((alert) => alert.textContent?.includes('catalog_item_in_use')),
+      screen.getAllByRole('alert').some((alert) => alert.textContent?.includes('catalog_item_in_use')),
     ).toBe(true));
-    expect(screen.getByRole('dialog', { name: /Редактировать: Test Track/ })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Test Track' })).toBeTruthy();
+  });
+
+  it('opens a card by direct link from the details answer', async () => {
+    const existing = catalogItem();
+    apiFetch.mockImplementation(async (path: string) => {
+      if (path === `/admin/catalog/items/${existing.id}`) return { ...existing, versions: [{ id: 'v1', checksumSha256: 'f'.repeat(64), createdAt: existing.createdAt }], usages: [{ ownerType: 'EVENT', ownerId: '42', versionId: 'v1' }] };
+      if (path.startsWith('/admin/catalog/tags?')) return ['ac'];
+      return [];
+    });
+    renderAt(`/media-catalog/item/${existing.id}`);
+
+    expect(await screen.findByRole('heading', { name: 'Test Track' })).toBeTruthy();
+    expect(await screen.findByRole('link', { name: 'Событие #42' })).toBeTruthy();
+  });
+
+  it('shows missing access as forbidden, not as an empty list', async () => {
+    const { ApiError } = await vi.importActual<typeof import('../shared/api')>('../shared/api');
+    apiFetch.mockImplementation(async (path: string) => {
+      if (path.startsWith('/admin/catalog/items?')) throw new ApiError('forbidden', 403);
+      return [];
+    });
+    renderCatalog('car');
+    expect(await screen.findByText('Недостаточно прав')).toBeTruthy();
   });
 });
 
+const ACCESS = {
+  userId: '1',
+  panelAccess: true,
+  grants: [{ id: '1', roleCode: 'platform_owner', scopeType: 'platform' as const, scopeId: null, validFrom: null, validTo: null, constraints: null, permissions: ['catalog.manage.all'] }],
+};
+
+function renderAt(path: string) {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <Routes><Route path="/media-catalog/*" element={<CatalogPage access={ACCESS} />} /></Routes>
+    </MemoryRouter>,
+  );
+}
+
 function renderCatalog(kind: 'car' | 'track') {
-  window.history.replaceState({}, '', `/?kind=${kind}`);
-  return render(<CatalogPage access={{
-    userId: '1',
-    panelAccess: true,
-    grants: [{ id: '1', roleCode: 'platform_owner', scopeType: 'platform' as const, scopeId: null, validFrom: null, validTo: null, constraints: null, permissions: ['catalog.manage.all'] }],
-  }} />);
+  return renderAt(`/media-catalog?kind=${kind}`);
+}
+
+async function openRow(title: string) {
+  await userEvent.setup().click(await screen.findByRole('row', { name: new RegExp(`Открыть ${title}`) }));
+  await screen.findByRole('heading', { name: title });
+}
+
+function archiveInput() {
+  return [...document.querySelectorAll('input[type="file"]')].find((input) => input.getAttribute('accept')?.includes('zip')) as HTMLInputElement;
 }
 
 function uploadSession(id: string, assetKind = 'archive') {
