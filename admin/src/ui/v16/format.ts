@@ -55,6 +55,13 @@ export function weekday(value: string | null | undefined, timeZone?: string) {
   const w = parts(value!, timeZone).weekday;
   return w.charAt(0).toUpperCase() + w.slice(1);
 }
+const shortDays: Record<string, string> = { 'понедельник': 'Пн', 'вторник': 'Вт', 'среда': 'Ср', 'четверг': 'Чт', 'пятница': 'Пт', 'суббота': 'Сб', 'воскресенье': 'Вс' };
+/** Пн */
+export function shortWeekday(value: string | null | undefined, timeZone?: string) {
+  if (!valid(value)) return NO_VALUE;
+  const w = parts(value!, timeZone).weekday.toLowerCase();
+  return shortDays[w] ?? w.slice(0, 2);
+}
 /** Local calendar date key (YYYY-MM-DD) in the event zone, for grouping only. */
 export function localDateKey(value: string | null | undefined, timeZone?: string) {
   if (!valid(value)) return '';

@@ -2,20 +2,21 @@ import {useCallback,useEffect,useRef,useState} from 'react';
 import {ApiError,apiFetch} from '../../../shared/api';
 import {subscribeAdminRefresh} from '../../../shared/realtime';
 import type {Action,EventSummary} from './event-api';
+import type {ProgramBlock} from '../workspace/program';
 export interface WorkspaceSummary {
   eventId:string;version:string;observedAt:string;event:EventSummary;actions:Action[];editableFields:string[];
   metadata:{createdAt:string;updatedAt:string;publishedAt:string|null;author:{participantId:string;displayName:string}|null;organizer:{id:string;name:string}|null};
   currentStage:{key:string;title:string}|null;nextStage:{key:string;title:string;startsAt:string}|null;stop:{reason:string;requestedAt:string}|null;
-  program?:{key:string;title:string;type:string;startsAt:string;endsAt:string|null;track:string|null;cars:string[]}[];
+  program?:ProgramBlock[];
   counts:{stages:number;results:number;participants?:number};
   activity:{applications:{pending:number;accepted:number};runtime:{active:number;uncertain:number};hasRegistration:boolean};primaryResultId:string|null;
 }
 /** A refresh preserves the mounted section and previously fetched history pages. */
 export function useWorkspaceData<T>(path:string,active=true) {
-  const [data,setData]=useState<T|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+  const [data,setData]=useState<T|null>(null),[error,setError]=useState(''),[status,setStatus]=useState<number|null>(null),[busy,setBusy]=useState(false);
   const generation=useRef(0),loadedMore=useRef(false);
   const load=useCallback(async(cursor?:string)=>{
-    const revision=++generation.current;setBusy(true);setError('');
+    const revision=++generation.current;setBusy(true);setError('');setStatus(null);
     try {
       const next=await apiFetch<T>(path+(cursor?`${path.includes('?')?'&':'?'}afterId=${encodeURIComponent(cursor)}`:''));
       if(revision!==generation.current)return;
@@ -32,11 +33,12 @@ export function useWorkspaceData<T>(path:string,active=true) {
     } catch(e) {
       if(revision===generation.current) {
         if(e instanceof ApiError&&[401,403].includes(e.status))setData(null);
+        setStatus(e instanceof ApiError?e.status:null);
         setError(e instanceof ApiError&&e.status===403?'Недостаточно прав для просмотра этого раздела.':e instanceof Error?e.message:'Не удалось загрузить данные');
       }
     } finally {if(revision===generation.current)setBusy(false);}
   },[path]);
   useEffect(()=>{setData(null);loadedMore.current=false;return()=>{generation.current++;};},[path]);
   useEffect(()=>{if(!active)return;void load();const stop=subscribeAdminRefresh(['events','runtime','results','rating','registration'],()=>load());return()=>{generation.current++;stop();};},[active,load]);
-  return {data,error,busy,load};
+  return {data,error,status,busy,load};
 }

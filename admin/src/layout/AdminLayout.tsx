@@ -6,7 +6,7 @@ import { AchievementsPage } from '../pages/achievements/AchievementsPage';
 import { AuditPage } from '../pages/audit/AuditPage';
 import { ChatsPage } from '../pages/chats/ChatsPage';
 import { CatalogPage } from '../pages/catalog/CatalogPage';
-import { EventWorkspacePage as EventDetailsPage } from '../pages/events/current/EventWorkspacePage';
+import { EventWorkspacePage as EventDetailsPage } from '../pages/events/workspace/EventWorkspacePage';
 import { CurrentEventsPage as EventsPage } from '../pages/events/current/CurrentEventsPage';
 import { EventCardStudioPage } from '../pages/card-studio/EventCardStudioPage';
 import { MatchmakingPage } from '../pages/matchmaking/MatchmakingPage';
