@@ -241,7 +241,7 @@ export type EventCreateCatalog = {
 export type ModuleDefinition = {
   code: string;
   label: string;
-  group: 'racing' | 'content' | 'community' | 'system';
+  group: 'platform' | 'racing' | 'content' | 'community' | 'system';
   path: string;
   /** v16 navigation glyph. */
   glyph: string;

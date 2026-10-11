@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Link as RouterLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { EventAuthoringPage } from '../pages/events/current/EventAuthoringPage';
+import { DashboardPage } from '../pages/dashboard/DashboardPage';
 import { AccessPage } from '../pages/access/AccessPage';
 import { AchievementsPage } from '../pages/achievements/AchievementsPage';
 import { AuditPage } from '../pages/audit/AuditPage';
@@ -48,11 +49,13 @@ function getModules(access: AdminAccess): ModuleDefinition[] {
     { code: 'audit', label: 'Журнал действий', group: 'system', path: '/audit', glyph: '≡', permissions: ['audit.read.all'], element: <AuditPage /> },
     { code: 'users', label: 'Пилоты', group: 'community', path: '/users', glyph: '♙', permissions: ['users.read.all'], element: <UsersPage /> },
   ];
-  return modules.filter((module) => hasAny(access, module.permissions));
+  const visible = modules.filter((module) => hasAny(access, module.permissions));
+  // The overview only composes projections of other sections, so it is shown when at least one of them is available.
+  return visible.length ? [{ code: 'dashboard', label: 'Обзор', group: 'platform', path: '/dashboard', glyph: '◫', permissions: [], element: <DashboardPage access={access} /> }, ...visible] : visible;
 }
 
-const moduleOrder = ['events', 'matchmaking', 'practice-servers', 'runtime', 'officiating', 'catalog', 'content', 'event-cards', 'users', 'chats', 'achievements', 'access', 'audit'];
-const groupLabels: Record<ModuleDefinition['group'], string> = { racing: 'Гонки', content: 'Контент', community: 'Сообщество', system: 'Система' };
+const moduleOrder = ['dashboard', 'events', 'matchmaking', 'practice-servers', 'runtime', 'officiating', 'catalog', 'content', 'event-cards', 'users', 'chats', 'achievements', 'access', 'audit'];
+const groupLabels: Record<ModuleDefinition['group'], string> = { platform: 'Платформа', racing: 'Гонки', content: 'Контент', community: 'Сообщество', system: 'Система' };
 
 export function AdminLayout({ access }: { access: AdminAccess }) {
   const location = useLocation();
