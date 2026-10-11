@@ -435,3 +435,5 @@ body { margin: 0; background: var(--lsr-bg); color: var(--lsr-ink); font: 14px/1
 .lsr-pickcard b { font-size: 16px; font-weight: 750; }
 .lsr-pickglyph { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 9px; background: var(--lsr-soft); color: var(--lsr-blue); margin-bottom: 4px; }
 @media (max-width: 700px) { .lsr-pickersteps { grid-template-columns: 1fr; } .lsr-pickgrid { grid-template-columns: 1fr; } }
+/* Chrome resets box-sizing inside <details> content; keep v16 geometry everywhere in the app. */
+.lsr-root *, .lsr-root *::before, .lsr-root *::after { box-sizing: border-box; }

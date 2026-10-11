@@ -1,7 +1,8 @@
-import { Box, Button, Paper, Typography } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { exchangeSteamCode, getApiBaseUrl } from '../../shared/api';
+import { LoadingBlock, Notice } from '../../ui/v16';
+import { AuthCard } from './AuthCard';
 
 export function SteamCallbackPage() {
   const navigate = useNavigate();
@@ -27,11 +28,15 @@ export function SteamCallbackPage() {
   }, [navigate, params]);
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', p: 2 }}>
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
-        <Typography sx={{ fontWeight: 750 }}>{error ?? 'Завершаем вход через Steam...'}</Typography>
-        {error && <Button href={`${getApiBaseUrl()}/admin/auth/steam`}>Повторить вход</Button>}
-      </Paper>
-    </Box>
+    <AuthCard title="Вход через Steam" description={error ? undefined : 'Шаг 1 из 2 · подтверждаем авторизацию.'}>
+      {error ? (
+        <>
+          <Notice tone="danger">{error}</Notice>
+          <a className="lsr-btn is-primary lsr-auth-wide" href={`${getApiBaseUrl()}/admin/auth/steam`}>Повторить вход</a>
+        </>
+      ) : (
+        <div className="lsr-auth-wait"><p>Завершаем вход через Steam...</p><LoadingBlock rows={2} label="Завершаем вход через Steam" /></div>
+      )}
+    </AuthCard>
   );
 }

@@ -15,7 +15,6 @@ const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
 const token = (sub) => `${b64({ alg: 'none' })}.${b64({ sub, exp: Math.floor(Date.now() / 1000) + 12 * 3600 })}.mock`;
 const ALL_PERMISSIONS = ['events.read.all', 'events.write.all', 'events.publish.all', 'events.cancel.all', 'events.registrations.manage.all', 'events.override.all', 'monitoring.read', 'matchmaking.read.all', 'matchmaking.manage.all', 'practice.read.all', 'practice.manage.all', 'catalog.manage.all', 'news.write.all', 'news.publish.all', 'news.delete.all', 'chats.review.all', 'chats.system.write', 'users.moderate.all', 'users.read.all', 'access.manage.all', 'organizers.write.all', 'audit.read.all', 'reports.read.all', 'reports.audit.all', 'reports.decide.all', 'notifications.admin.delivery'];
 const access = { userId: '701', user: { id: '701', steamId: '76561198000000701', steamName: 'Vortex', steamAvatar: null, avatar: null, firstName: null, lastName: null }, grants: [{ id: 'g1', roleCode: 'platform_owner', scopeType: 'platform', scopeId: null, validFrom: null, validTo: null, constraints: null, permissions: ALL_PERMISSIONS }], panelAccess: true };
-const organizers = [{ id: '1', code: 'lsr', name: 'LeagueSimRacing', active: true, version: '3', description: 'Основной организатор', websiteUrl: null, discordUrl: null, theme: null, limits: {}, usage: {}, remaining: {}, quotaEnforcementMode: 'warn', actions: [] }];
 
 const routes = [];
 const on = (method, pattern, handler) => routes.push({ method, pattern: new RegExp('^' + pattern.replace(/:([a-zA-Z]+)/g, '(?<$1>[^/]+)') + '$'), handler });
@@ -30,7 +29,6 @@ on('POST', '/admin/auth/login', () => ({ accessToken: token('admin-701') }));
 on('POST', '/admin/auth/logout', () => ({}));
 on('GET', '/users/me', () => ({ steamId: access.user.steamId, steamName: 'Vortex', steamAvatar: null }));
 on('GET', '/admin/me/access', () => access);
-on('GET', '/admin/access/organizers', () => organizers);
 
 on('GET', '/admin/events', ({ q }) => listEvents(q));
 on('GET', '/admin/event-drafts', ({ q }) => page(DRAFTS.filter((d) => !q.get('q') || JSON.stringify(d).toLowerCase().includes(q.get('q').toLowerCase())), q, 20));

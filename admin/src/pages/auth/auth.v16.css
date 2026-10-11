@@ -1,0 +1,18 @@
+/* Sign-in screens: centered card on the v16 background. */
+.lsr-auth { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: var(--lsr-bg); }
+.lsr-auth-card { width: min(440px, 100%); background: var(--lsr-paper); border: 1px solid var(--lsr-line); border-radius: 14px; box-shadow: 0 18px 60px rgba(16, 36, 62, .08); padding: 28px 28px 26px; }
+.lsr-auth-brand { display: flex; align-items: center; gap: 11px; font-weight: 750; letter-spacing: -.4px; font-size: 14px; color: var(--lsr-ink); margin-bottom: 26px; }
+.lsr-auth-brand .lsr-brandmark { color: #fff; }
+.lsr-auth-card h1 { margin: 0 0 6px; font-size: 22px; font-weight: 750; letter-spacing: -.6px; color: var(--lsr-ink); }
+.lsr-auth-desc { margin: 0; color: var(--lsr-sub); font-size: 13px; }
+.lsr-auth-body { display: grid; gap: 14px; margin-top: 22px; }
+.lsr-auth-form { display: grid; gap: 14px; }
+.lsr-auth-wide { width: 100%; min-height: 40px; }
+.lsr-auth-steam { display: flex; align-items: center; gap: 12px; border: 1px solid var(--lsr-line); border-radius: 10px; padding: 11px 12px; background: #fafbfd; }
+.lsr-auth-steam img, .lsr-auth-avatar { width: 40px; height: 40px; border-radius: 50%; flex: none; object-fit: cover; }
+.lsr-auth-avatar { display: grid; place-items: center; background: #e6ecf7; color: #3d5170; font-weight: 750; }
+.lsr-auth-steam-main { flex: 1; min-width: 0; }
+.lsr-auth-steam-main b { display: block; font-size: 14px; color: var(--lsr-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lsr-auth-steam-main small { display: block; margin-top: 2px; font-size: 12px; color: var(--lsr-sub); }
+.lsr-auth-wait p { margin: 0 0 12px; font-weight: 650; color: var(--lsr-text); }
+@media (max-width: 560px) { .lsr-auth-card { padding: 22px 18px; } }

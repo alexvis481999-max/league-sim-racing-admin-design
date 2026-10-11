@@ -1,146 +1,160 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Avatar, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Tab, Tabs, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
-import { apiFetch, ApiError, putJsonBody } from '../../shared/api';
+import { useSearchParams } from 'react-router-dom';
+import { apiFetch } from '../../shared/api';
 import { useRealtimeRefresh } from '../../shared/realtime';
-import { CreateAction, ListToolbar, Page, RefreshAction, SearchField, Section, useDebouncedValue } from '../../shared/ui';
-import { FixedTablePagination, EmptyTableRow } from '../../shared/table';
+import { useDebouncedValue } from '../../shared/ui';
 import type { AdminAccess } from '../../shared/types';
-import type { AccessGrantRecord, AccessRole, OrganizerRecord } from '../../shared/access-types';
-import { defaultSettings, dateLabel, eventTypeName, GrantEditor, OrganizerEditor, quotaFields, scopeNames, statusNames, type GrantDraft, type OrganizerDraft } from './AccessForms';
+import type { AccessRole, OrganizerRecord } from '../../shared/access-types';
+import { Button, EmptyState, ErrorState, Notice, PageHeader, Panel, PillButtons, SearchInput, Skeleton, StatusBadge, Table, TableFoot, Tabs, Toolbar, clickableRow, count, usePageChrome } from '../../ui/v16';
+import { OrganizerDetail } from './OrganizerDetail';
+import { UserAccessDetail } from './UserAccessDetail';
+import { errorMessage, errorStatus, eventTypeName, quotaFields, quotaModeName, scopeNames, type AccessUser } from './access-model';
+import './access.v16.css';
 
-type AccessUser = { userId: string; steamId?: string; presentation: { displayName: string; avatarUrl?: string } };
+type Tab = 'organizers' | 'users' | 'roles';
 type UserPage = { items: AccessUser[]; pagination?: { total: number; totalPages: number } };
-type GrantChange = { id: string; actorId: string; at: string; before: AccessGrantRecord | null; after: AccessGrantRecord };
-const errors: Record<string, string> = { last_platform_owner: 'Нельзя убрать последнего действующего бессрочного владельца платформы.', version_conflict: 'Запись уже изменена. Закройте форму, обновите список и откройте её заново.', version_required: 'Не получена версия записи. Обновите список.', grant_revoked: 'Отозванный доступ нельзя редактировать. Выдайте новый.', access_denied: 'Недостаточно прав для этого действия.', organizer_code_exists: 'Этот код организатора уже занят.' };
-function errorMessage(error: unknown) {
-  if (error instanceof ApiError) { try { return errors[JSON.parse(error.bodyText ?? '{}').error?.code] ?? error.message; } catch { return error.message; } }
-  return error instanceof Error ? error.message : 'Не удалось выполнить операцию';
-}
-const newGrant = (subjectId: string): GrantDraft => ({ subjectId, roleCode: '', scopeType: 'organizer', scopeId: null, validFrom: null, validTo: null, constraints: null });
 
+/** Organizers, user grants and the role catalog. `?organizer=<id|new>` and `?userId=` open the record screens. */
 export function AccessPage({ access }: { access: AdminAccess }) {
   const manage = access.grants.some(grant => grant.permissions.includes('access.manage.all'));
   const create = access.grants.some(grant => grant.permissions.includes('organizers.write.all'));
-  const [roles, setRoles] = useState<AccessRole[]>([]), [organizers, setOrganizers] = useState<OrganizerRecord[]>([]);
-  const [orgQuery, setOrgQuery] = useState(''), [query, setQuery] = useState('');
-  const search = useDebouncedValue(query.trim());
-  const [users, setUsers] = useState<AccessUser[]>([]), [page, setPage] = useState(0), [total, setTotal] = useState(0), [usersLoading, setUsersLoading] = useState(false);
-  const [selected, setSelected] = useState<AccessUser | null>(null), [grants, setGrants] = useState<AccessGrantRecord[]>([]), [grantsLoading, setGrantsLoading] = useState(false);
-  const [userTab, setUserTab] = useState(0), [org, setOrg] = useState<OrganizerDraft | null>(null), [grant, setGrant] = useState<GrantDraft | null>(null);
-  const [history, setHistory] = useState<GrantChange[] | null>(null), [themeText, setThemeText] = useState('null'), [password, setPassword] = useState('');
-  const [busy, setBusy] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState('');
-  const [reload, setReload] = useState(0);
-  const lock = useRef(false), alive = useRef(true), grantRevision = useRef(0), selectedId = useRef<string | null>(null);
-  const commands = useRef(new Map<string, string>());
-  useEffect(() => { const userId = new URLSearchParams(window.location.search).get('userId'); if (!userId) return; let live = true; void apiFetch<AccessUser>('/admin/users/' + encodeURIComponent(userId)).then(user => { if (live) openUser(user); }).catch(error => { if (live) setError(errorMessage(error)); }); return () => { live = false; }; }, []);
-  useEffect(() => { alive.current = true; return () => { alive.current = false; grantRevision.current++; }; }, []);
-  const command = (path: string, method: string, body: unknown, version?: string): RequestInit => {
-    const fingerprint = JSON.stringify([path, method, body, version]);
-    const id = commands.current.get(fingerprint) ?? crypto.randomUUID(); commands.current.set(fingerprint, id);
-    return { method, headers: { 'Idempotency-Key': id, ...(version ? { 'If-Match': version } : {}) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) };
-  };
-  const run = async (action: () => Promise<void>) => {
-    if (lock.current) return;
-    lock.current = true; setBusy(true); setError(''); setNotice('');
-    try { await action(); } catch (e) { if (alive.current) setError(errorMessage(e)); }
-    finally { lock.current = false; if (alive.current) setBusy(false); }
-  };
+  const [params, setParams] = useSearchParams();
+  const organizerParam = params.get('organizer'), userParam = manage ? params.get('userId') : null;
+  const requested = params.get('tab') as Tab | null;
+  const tab: Tab = requested === 'users' && manage ? 'users' : requested === 'roles' ? 'roles' : 'organizers';
+  const [roles, setRoles] = useState<AccessRole[] | null>(null), [organizers, setOrganizers] = useState<OrganizerRecord[] | null>(null);
+  const [listError, setListError] = useState<{ message: string; status: number | null } | null>(null), [loading, setLoading] = useState(true), [notice, setNotice] = useState('');
+  const [known, setKnown] = useState<Record<string, AccessUser>>({}), alive = useRef(true);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   async function load() {
-    const [catalog, rows] = await Promise.all([apiFetch<{ items: AccessRole[] }>('/admin/access/roles'), apiFetch<OrganizerRecord[]>('/admin/access/organizers?includeInactive=true')]);
-    if (alive.current) { setRoles(catalog.items); setOrganizers(rows); }
-  }
-  async function loadGrants(id: string) {
-    const revision = ++grantRevision.current; setGrantsLoading(true);
+    setLoading(true);
     try {
-      const rows = await apiFetch<AccessGrantRecord[]>('/admin/access/grants?subjectId=' + encodeURIComponent(id));
-      if (alive.current && revision === grantRevision.current && selectedId.current === id) setGrants(rows);
-    } finally { if (alive.current && revision === grantRevision.current) setGrantsLoading(false); }
+      const [catalog, rows] = await Promise.all([apiFetch<{ items: AccessRole[] }>('/admin/access/roles'), apiFetch<OrganizerRecord[]>('/admin/access/organizers?includeInactive=true')]);
+      if (alive.current) { setRoles(catalog.items); setOrganizers(rows); setListError(null); }
+    } catch (e) { if (alive.current) setListError({ message: errorMessage(e), status: errorStatus(e) }); }
+    finally { if (alive.current) setLoading(false); }
   }
-  useEffect(() => { void load().catch(e => { if (alive.current) setError(errorMessage(e)); }); }, []);
+  useEffect(() => { void load(); }, []);
+  useRealtimeRefresh(['security', 'access'], () => load());
+  const go = (patch: Record<string, string | null>, replace = false) => setParams(old => { const next = new URLSearchParams(old); Object.entries(patch).forEach(([key, value]) => value ? next.set(key, value) : next.delete(key)); return next; }, { replace });
+
+  if (organizerParam) {
+    const creating = organizerParam === 'new' && create;
+    return <OrganizerDetail key={organizerParam} creating={creating} loading={loading} record={creating ? null : organizers?.find(row => row.id === organizerParam) ?? null}
+      back={() => go({ organizer: null })}
+      onSaved={async (message, created) => { await load(); if (created) { setNotice(message); go({ organizer: null }); } }} />;
+  }
+  if (userParam) return <UserAccessDetail key={userParam} userId={userParam} known={known[userParam] ?? null} roles={roles ?? []} organizers={organizers ?? []} back={() => go({ userId: null, tab: 'users' })} />;
+  return <AccessLists tab={tab} manage={manage} create={create} roles={roles} organizers={organizers} loading={loading} error={listError} notice={notice}
+    onTab={next => { setNotice(''); go({ tab: next === 'organizers' ? null : next }, true); }}
+    onRefresh={() => void load()}
+    onOrganizer={id => { setNotice(''); go({ organizer: id }); }}
+    onUser={user => { setKnown(old => ({ ...old, [user.userId]: user })); setNotice(''); go({ userId: user.userId }); }} />;
+}
+
+function AccessLists({ tab, manage, create, roles, organizers, loading, error, notice, onTab, onRefresh, onOrganizer, onUser }: { tab: Tab; manage: boolean; create: boolean; roles: AccessRole[] | null; organizers: OrganizerRecord[] | null; loading: boolean; error: { message: string; status: number | null } | null; notice: string; onTab(tab: Tab): void; onRefresh(): void; onOrganizer(id: string): void; onUser(user: AccessUser): void }) {
+  usePageChrome({ crumbs: [{ label: 'Организаторы и доступы' }] });
+  return (
+    <>
+      <PageHeader overline="Администрирование" title="Организаторы и доступы" description="Организаторы, квоты и роли сотрудников"
+        actions={<><Button disabled={loading} onClick={onRefresh}>{loading ? 'Обновляем…' : 'Обновить'}</Button>{create && <Button variant="primary" onClick={() => onOrganizer('new')}>＋ Организатор</Button>}</>} />
+      <Tabs variant="module" label="Разделы доступа" value={tab} onChange={onTab} items={[{ key: 'organizers', label: 'Организаторы', count: organizers?.length ?? null }, { key: 'users', label: 'Доступы пользователей', hidden: !manage }, { key: 'roles', label: 'Роли', count: roles?.length ?? null }]} />
+      {notice && <div className="lsr-access-gap"><Notice role="status">{notice}</Notice></div>}
+      {tab === 'organizers' && <OrganizersTab rows={organizers} loading={loading} error={error} onRetry={onRefresh} onOpen={onOrganizer} />}
+      {tab === 'users' && manage && <UsersTab onOpen={onUser} />}
+      {tab === 'roles' && <RolesTab roles={roles} loading={loading} error={error} onRetry={onRefresh} />}
+    </>
+  );
+}
+
+function OrganizersTab({ rows, loading, error, onRetry, onOpen }: { rows: OrganizerRecord[] | null; loading: boolean; error: { message: string; status: number | null } | null; onRetry(): void; onOpen(id: string): void }) {
+  const [query, setQuery] = useState(''), [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const all = rows ?? [];
+  const shown = all.filter(row => (filter === 'all' || row.active === (filter === 'active')) && query.toLocaleLowerCase('ru').split(/\s+/).every(term => [row.name, row.code, row.id].join(' ').toLocaleLowerCase('ru').includes(term)));
+  return <>
+    <Panel title="Организаторы" body={false}>
+      <Toolbar>
+        <SearchInput wide value={query} onChange={setQuery} placeholder="Название, код или ID" label="Поиск организатора" />
+        <PillButtons label="Состояние организатора" value={filter} onChange={setFilter} options={[{ value: 'all', label: 'Все' }, { value: 'active', label: 'Активные' }, { value: 'inactive', label: 'Выключенные' }]} />
+      </Toolbar>
+      {error && !rows ? <div className="lsr-access-pad"><ErrorState error={error.message} status={error.status} onRetry={onRetry} /></div>
+        : rows && !shown.length ? <EmptyState compact title="Организаторы не найдены">{all.length ? 'Измените поиск или фильтр.' : 'Организаторов пока нет.'}</EmptyState>
+        : <Table variant="module" label="Организаторы">
+            <thead><tr><th>Организатор</th><th>Статус</th><th>Разрешённые типы</th><th>Квоты</th><th className="lsr-right">Доступ к записи</th></tr></thead>
+            <tbody>
+              {!rows && loading && Array.from({ length: 3 }, (_, i) => <tr key={i}><td><Skeleton width="50%" height={14} /><Skeleton width="30%" height={11} style={{ marginTop: 6 }} /></td><td><Skeleton width={70} height={20} /></td><td><Skeleton width={120} height={14} /></td><td><Skeleton width={140} height={14} /></td><td /></tr>)}
+              {shown.map(row => {
+                const limited = quotaFields.filter(([key]) => row.settings[key] !== null);
+                const action = row.actions?.edit ? 'Настроить' : row.actions?.editPresentation ? 'Оформление' : 'Просмотр';
+                return <tr key={row.id} {...clickableRow(() => onOpen(row.id))} aria-label={'Открыть организатора ' + row.name}>
+                  <td><div className="lsr-primary">{row.name}</div><div className="lsr-minor">{row.code} · ID {row.id}</div></td>
+                  <td><StatusBadge variant="badge" status={{ code: row.active ? 'active' : 'inactive', label: row.active ? 'Активен' : 'Выключен' }} tone={row.active ? 'done' : 'scheduled'} /></td>
+                  <td>{row.settings.allowedEventRuntimeTypes.length ? row.settings.allowedEventRuntimeTypes.map(eventTypeName).join(' · ') : <span className="lsr-sub">Все типы</span>}</td>
+                  <td>{limited.length ? <div className="lsr-access-quotas">{limited.map(([key, label, usage]) => <span key={key}>{label}: <b>{row.usage ? `${row.usage[usage]} / ` : ''}{row.settings[key]}</b>{row.remaining?.[key] != null ? ` · осталось ${row.remaining[key]}` : ''}</span>)}<span className="lsr-minor">При превышении: {quotaModeName(row.settings.quotaEnforcementMode).toLowerCase()}</span></div> : <span className="lsr-sub">Без ограничений</span>}</td>
+                  <td className="lsr-right"><Button size="sm" variant={row.actions?.edit || row.actions?.editPresentation ? 'default' : 'plain'} onClick={() => onOpen(row.id)}>{action}</Button></td>
+                </tr>;
+              })}
+            </tbody>
+          </Table>}
+      {error && rows && <div className="lsr-access-pad"><ErrorState compact error={error.message} status={error.status} onRetry={onRetry} /></div>}
+    </Panel>
+    <div className="lsr-access-gap is-top"><Notice>Разрешённые типы и квоты организатора ограничивают выбор в конструкторе событий. Пустой лимит означает «без ограничения», а не «0».</Notice></div>
+  </>;
+}
+
+function UsersTab({ onOpen }: { onOpen(user: AccessUser): void }) {
+  const [query, setQuery] = useState(''), [page, setPage] = useState(0), [users, setUsers] = useState<AccessUser[] | null>(null), [total, setTotal] = useState(0), [pages, setPages] = useState(1), [loading, setLoading] = useState(true), [error, setError] = useState<{ message: string; status: number | null } | null>(null), [reload, setReload] = useState(0);
+  const search = useDebouncedValue(query.trim());
   useEffect(() => {
-    if (!manage) return;
-    let current = true; setUsersLoading(true);
+    let current = true; setLoading(true); setError(null);
     void apiFetch<UserPage>(`/admin/users?q=${encodeURIComponent(search)}&page=${page + 1}&pageSize=20`).then(data => {
       if (!current) return;
-      setUsers(data.items ?? []); setTotal(data.pagination?.total ?? data.items?.length ?? 0);
+      setUsers(data.items ?? []); setTotal(data.pagination?.total ?? data.items?.length ?? 0); setPages(Math.max(1, data.pagination?.totalPages ?? 1));
       if (data.pagination) setPage(value => Math.min(value, Math.max(0, data.pagination!.totalPages - 1)));
-    }).catch(e => { if (current) setError(errorMessage(e)); }).finally(() => { if (current) setUsersLoading(false); });
+    }).catch(e => { if (current) setError({ message: errorMessage(e), status: errorStatus(e) }); }).finally(() => { if (current) setLoading(false); });
     return () => { current = false; };
-  }, [manage, search, page, reload]);
-  useRealtimeRefresh(['security', 'access', 'profiles'], async () => {
-    try { await load(); if (selectedId.current) await loadGrants(selectedId.current); setReload(value => value + 1); }
-    catch (e) { if (alive.current) setError(errorMessage(e)); }
-  });
-  function openOrganizer(row?: OrganizerRecord) {
-    setError(''); setThemeText(JSON.stringify(row?.settings.theme ?? null, null, 2));
-    setOrg(row ? { ...row, presentationOnly: !row.actions.edit } : { code: '', name: '', description: null, active: true, settings: structuredClone(defaultSettings) });
-  }
-  function openUser(user: AccessUser) {
-    selectedId.current = user.userId; setSelected(user); setUserTab(0); setGrants([]); setGrant(null); setPassword(''); setError(''); setNotice('');
-    void loadGrants(user.userId).catch(e => { if (selectedId.current === user.userId) setError(errorMessage(e)); });
-  }
-  function closeUser() { if (busy) return; selectedId.current = null; grantRevision.current++; setSelected(null); setGrant(null); setPassword(''); }
-  const saveOrg = () => run(async () => {
-    if (!org) return;
-    let theme: unknown; try { theme = JSON.parse(themeText); } catch { throw new Error('Оформление должно содержать корректный JSON.'); }
-    if (theme !== null && (typeof theme !== 'object' || Array.isArray(theme))) throw new Error('Оформление должно быть объектом или null.');
-    const path = org.id ? `/admin/access/organizers/${org.id}${org.presentationOnly ? '/presentation' : ''}` : '/admin/access/organizers';
-    const payload = org.presentationOnly ? { name: org.name, description: org.description, theme, websiteUrl: org.settings.websiteUrl, discordUrl: org.settings.discordUrl } : { code: org.code, name: org.name, description: org.description, active: org.active, settings: { ...org.settings, theme } };
-    await apiFetch(path, command(path, org.id ? 'PUT' : 'POST', payload, org.version)); commands.current.clear(); setOrg(null); await load(); setNotice('Организатор сохранён.');
-  });
-  const saveGrant = () => run(async () => {
-    if (!grant) return;
-    const { id, version, ...payload } = grant;
-    const path = id ? `/admin/access/grants/${id}` : '/admin/access/grants';
-    await apiFetch(path, command(path, id ? 'PUT' : 'POST', payload, version)); commands.current.clear(); setGrant(null); setUserTab(0); await loadGrants(payload.subjectId); setNotice('Доступ сохранён.');
-  });
-  const revoke = (row: AccessGrantRecord) => run(async () => {
-    const path = `/admin/access/grants/${row.id}`;
-    await apiFetch(path, command(path, 'DELETE', undefined, row.version)); commands.current.clear(); await loadGrants(row.subjectId); setNotice('Доступ отозван.');
-  });
-  const role = roles.find(item => item.code === grant?.roleCode);
-  const grantValid = !!role && !!grant && role.scopeTypes.includes(grant.scopeType) && (grant.scopeType === 'platform' || /^[1-9]\d*$/.test(grant.scopeId ?? '')) && (grant.constraints?.mustEndWithinHours == null || Number.isSafeInteger(grant.constraints.mustEndWithinHours) && grant.constraints.mustEndWithinHours > 0) && (!grant.validFrom || !grant.validTo || Date.parse(grant.validFrom) <= Date.parse(grant.validTo));
-  const organizerValid = !!org?.name.trim() && (org.presentationOnly || /^[a-z0-9_-]{2,64}$/i.test(org.code.trim()) && quotaFields.every(([key]) => org.settings[key] === null || Number.isSafeInteger(org.settings[key]) && org.settings[key]! > 0));
-  const scopeLabel = (row: AccessGrantRecord) => row.scopeType === 'platform' ? scopeNames.platform : row.scopeType === 'organizer' ? organizers.find(item => item.id === row.scopeId)?.name ?? 'Организатор #' + row.scopeId : 'Событие #' + row.scopeId;
-  const shownOrganizers = organizers.filter(row => orgQuery.toLocaleLowerCase('ru').split(/\s+/).every(term => [row.name, row.code, row.id].join(' ').toLocaleLowerCase('ru').includes(term)));
-  return <Page title="Доступы и организаторы" actions={<RefreshAction loading={busy} onClick={() => void run(async () => { await load(); setReload(value => value + 1); if (selected) await loadGrants(selected.userId); })} />}>
-    {error && !org && !selected && <Alert severity="error">{error}</Alert>}{notice && !selected && <Alert severity="success">{notice}</Alert>}
-    <Section title="Организаторы" actions={create ? <CreateAction label="Добавить организатора" disabled={busy} onClick={() => openOrganizer()} /> : undefined}>
-      <ListToolbar><SearchField label="Поиск организатора" placeholder="Название, код или ID" value={orgQuery} onChange={setOrgQuery} /></ListToolbar>
-      <TableContainer><Table size="small" aria-label="Организаторы"><TableHead><TableRow><TableCell>Название</TableCell><TableCell>Может создавать</TableCell><TableCell>Квоты</TableCell><TableCell>Статус</TableCell><TableCell align="right">Действия</TableCell></TableRow></TableHead><TableBody>
-        {shownOrganizers.map(row => <TableRow key={row.id} hover>
-          <TableCell><Typography fontWeight={750}>{row.name}</Typography><Typography variant="caption" color="text.secondary">{row.code} · ID {row.id}</Typography></TableCell>
-          <TableCell><Stack direction="row" useFlexGap flexWrap="wrap" gap={0.5}>{row.settings.allowedEventRuntimeTypes.length ? row.settings.allowedEventRuntimeTypes.map(type => <Chip key={type} size="small" variant="outlined" label={eventTypeName(type)} />) : <Typography variant="body2" color="text.secondary">Все типы</Typography>}</Stack></TableCell>
-          <TableCell><Stack gap={0.5}>{quotaFields.filter(([key]) => row.settings[key] !== null).map(([key, label, usage]) => <Typography key={key} variant="caption">{label}: {row.usage ? row.usage[usage] + ' / ' : ''}{row.settings[key]}{row.remaining?.[key] != null ? ' · осталось ' + row.remaining[key] : ''}</Typography>)}{quotaFields.every(([key]) => row.settings[key] === null) && <Typography variant="body2" color="text.secondary">Без ограничений</Typography>}</Stack></TableCell>
-          <TableCell><Chip size="small" variant="outlined" label={row.active ? 'Активен' : 'Выключен'} color={row.active ? 'success' : 'default'} /></TableCell>
-          <TableCell align="right">{row.actions?.edit || row.actions?.editPresentation ? <Button disabled={busy} onClick={() => openOrganizer(row)}>{row.actions.edit ? 'Настроить' : 'Оформление'}</Button> : <Typography variant="caption" color="text.secondary">Только просмотр</Typography>}</TableCell>
-        </TableRow>)}{!shownOrganizers.length && <EmptyTableRow colSpan={5} label="Организаторы не найдены." />}
-      </TableBody></Table></TableContainer>
-    </Section>
-    {manage && <Section title="Доступы пользователей">
-      <ListToolbar><SearchField label="Поиск пользователя" placeholder="Имя, SteamID или ID пользователя" value={query} onChange={value => { setQuery(value.slice(0, 200)); setPage(0); }} /></ListToolbar>
-      {usersLoading && <Typography variant="body2" role="status" color="text.secondary">Загружаем пользователей…</Typography>}
-      <TableContainer><Table size="small" aria-label="Доступы пользователей"><TableHead><TableRow><TableCell>Пользователь</TableCell><TableCell>SteamID</TableCell><TableCell align="right">Доступы</TableCell></TableRow></TableHead><TableBody>
-        {users.map(user => <TableRow key={user.userId} hover><TableCell><Stack direction="row" gap={1.5} alignItems="center"><Avatar src={user.presentation.avatarUrl} sx={{ width: 32, height: 32 }} /><Box><Button sx={{ p: 0, justifyContent: 'flex-start' }} onClick={() => openUser(user)}>{user.presentation.displayName}</Button><Typography variant="caption" display="block" color="text.secondary">ID {user.userId}</Typography></Box></Stack></TableCell><TableCell>{user.steamId ?? '—'}</TableCell><TableCell align="right"><Button onClick={() => openUser(user)}>Роли и доступы</Button></TableCell></TableRow>)}
-        {!usersLoading && !users.length && <EmptyTableRow colSpan={3} label="Пользователи не найдены." />}
-      </TableBody></Table></TableContainer>
-      <FixedTablePagination count={total} page={page} rowsPerPage={20} onPageChange={setPage} />
-    </Section>}
-    <Section title="Что разрешает каждая роль">
-      <Typography variant="body2" color="text.secondary">Область определяет, где действуют права: на всей платформе, у организатора или в конкретном событии.</Typography>
-      {roles.map(item => <Box key={item.code} sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(230px, .75fr) minmax(0, 1.8fr)' }, gap: 2, py: 2, borderTop: 1, borderColor: 'divider' }}><Box><Typography fontWeight={750}>{item.title}</Typography><Typography variant="caption" color="text.secondary">{item.scopeTypes.map(type => scopeNames[type]).join(' · ')}</Typography></Box><Box><Typography variant="body2">{item.description}</Typography><Box component="details" sx={{ mt: 1 }}><Box component="summary" sx={{ cursor: 'pointer', color: 'text.secondary', fontSize: 13 }}>Разрешения: {item.permissions.length}</Box><Stack direction="row" useFlexGap flexWrap="wrap" gap={0.5} sx={{ mt: 1 }}>{item.permissions.map(permission => <Chip key={permission} size="small" variant="outlined" label={permission} />)}</Stack></Box></Box></Box>)}
-    </Section>
-    <Dialog open={!!org} onClose={() => !busy && setOrg(null)} fullWidth maxWidth="md"><DialogTitle>{org?.presentationOnly ? 'Оформление организатора' : org?.id ? 'Настройки организатора' : 'Добавить организатора'}</DialogTitle><DialogContent><Stack spacing={2} sx={{ pt: 1 }}>
-      {error && <Alert severity="error">{error}</Alert>}{org && <OrganizerEditor value={org} onChange={setOrg} disabled={busy} />}
-      <Box component="details"><Box component="summary" sx={{ cursor: 'pointer', color: 'text.secondary', fontSize: 14 }}>Оформление</Box><TextField label="Оформление (JSON)" multiline minRows={3} value={themeText} disabled={busy} onChange={e => setThemeText(e.target.value)} sx={{ mt: 1 }} /></Box>
-    </Stack></DialogContent><DialogActions><Button disabled={busy} onClick={() => setOrg(null)}>Закрыть</Button><Button variant="contained" disabled={busy || !organizerValid} onClick={() => void saveOrg()}>Сохранить</Button></DialogActions></Dialog>
-    <Dialog open={!!selected} onClose={closeUser} fullWidth maxWidth="md"><DialogTitle>{selected?.presentation.displayName ?? 'Доступы пользователя'}<Typography variant="caption" display="block" color="text.secondary">ID {selected?.userId}</Typography></DialogTitle><DialogContent><Stack spacing={2}>
-      {error && <Alert severity="error">{error}</Alert>}{notice && <Alert severity="success">{notice}</Alert>}
-      <Tabs value={userTab} onChange={(_, tab: number) => { setUserTab(tab); if (tab === 1 && selected) setGrant(newGrant(selected.userId)); }}><Tab label="Роли" disabled={busy} /><Tab label="Добавить роль" disabled={busy} /><Tab label="Пароль" disabled={busy} /></Tabs>
-      {userTab === 0 && <>{grantsLoading ? <Typography color="text.secondary">Загружаем доступы…</Typography> : grants.map(row => <Stack key={row.id} spacing={1} sx={{ p: 1.5, border: 1, borderColor: 'divider', borderRadius: 1 }}><Stack direction={{ xs: 'column', sm: 'row' }} gap={1} justifyContent="space-between"><Box><Typography fontWeight={750}>{roles.find(item => item.code === row.roleCode)?.title ?? row.roleCode}</Typography><Typography variant="body2" color="text.secondary">{scopeLabel(row)}</Typography></Box><Chip size="small" label={statusNames[row.status ?? (row.revokedAt ? 'revoked' : 'active')]} variant="outlined" /></Stack><Typography variant="caption" color="text.secondary">{row.validFrom ? 'С ' + dateLabel(row.validFrom) : 'Без даты начала'} · {row.validTo ? 'До ' + dateLabel(row.validTo) + '' : 'Бессрочно'}</Typography><Stack direction="row" useFlexGap flexWrap="wrap" gap={1}>{!row.revokedAt && <><Button disabled={busy} onClick={() => { const { revokedAt: _revoked, status: _status, ...draft } = row; setGrant(draft); setUserTab(1); }}>Изменить</Button><Button color="error" disabled={busy} onClick={() => void revoke(row)}>Отозвать</Button></>}<Button disabled={busy} onClick={() => void run(async () => setHistory(await apiFetch<GrantChange[]>(`/admin/access/grants/${row.id}/history`)))}>История</Button></Stack></Stack>)}{!grantsLoading && !grants.length && <Typography color="text.secondary">Ролей пока нет.</Typography>}</>}
-      {userTab === 1 && grant && <><GrantEditor value={grant} onChange={setGrant} roles={roles} organizers={organizers} disabled={busy} /><Box><Button variant="contained" disabled={busy || !grantValid} onClick={() => void saveGrant()}>{grant.id ? 'Сохранить доступ' : 'Выдать роль'}</Button></Box></>}
-      {userTab === 2 && <><Typography variant="body2" color="text.secondary">Изменение пароля завершит административные сессии пользователя.</Typography><TextField label="Новый пароль" type="password" autoComplete="new-password" value={password} disabled={busy} onChange={e => setPassword(e.target.value)} /><Stack direction="row" useFlexGap flexWrap="wrap" gap={1}><Button variant="contained" disabled={busy || !password || !selected} onClick={() => void run(async () => { await apiFetch('/admin/auth/password', putJsonBody({ userId: selected!.userId, adminPassword: password })); setPassword(''); setNotice('Пароль изменён.'); })}>Установить пароль</Button><Button color="error" disabled={busy || !selected} onClick={() => void run(async () => { await apiFetch(`/admin/auth/password/${selected!.userId}`, { method: 'DELETE' }); setPassword(''); setNotice('Пароль удалён.'); })}>Удалить пароль</Button></Stack></>}
-    </Stack></DialogContent><DialogActions><Button disabled={busy} onClick={closeUser}>Закрыть</Button></DialogActions></Dialog>
-    <Dialog open={history !== null} onClose={() => setHistory(null)} fullWidth maxWidth="md"><DialogTitle>История доступа</DialogTitle><DialogContent><Stack gap={2}>{history?.map(change => <Box key={change.id} sx={{ pb: 1.5, borderBottom: 1, borderColor: 'divider' }}><Typography variant="body2">{dateLabel(change.at)} · Пользователь {change.actorId}</Typography><Typography fontWeight={750}>{!change.before ? 'Доступ выдан' : change.after.revokedAt ? 'Доступ отозван' : 'Доступ изменён'}</Typography><Typography variant="body2" color="text.secondary">{roles.find(item => item.code === change.after.roleCode)?.title ?? change.after.roleCode} · {scopeLabel(change.after)}</Typography></Box>)}{!history?.length && <Typography color="text.secondary">История пуста.</Typography>}</Stack></DialogContent><DialogActions><Button onClick={() => setHistory(null)}>Закрыть</Button></DialogActions></Dialog>
-  </Page>;
+  }, [search, page, reload]);
+  useRealtimeRefresh(['profiles'], () => setReload(v => v + 1));
+  return <>
+    <Panel title="Пользователи" sub="Выберите пользователя, чтобы увидеть, выдать или отозвать его роли" body={false}>
+      <Toolbar><SearchInput wide value={query} onChange={value => { setQuery(value.slice(0, 200)); setPage(0); }} placeholder="Имя, SteamID или ID пользователя" label="Поиск пользователя" /></Toolbar>
+      {error ? <div className="lsr-access-pad"><ErrorState error={error.message} status={error.status} onRetry={() => setReload(v => v + 1)} /></div>
+        : users && !users.length && !loading ? <EmptyState compact title="Пользователи не найдены">Измените запрос.</EmptyState>
+        : <Table variant="module" label="Доступы пользователей">
+            <thead><tr><th>Пользователь</th><th>SteamID</th><th className="lsr-right">Доступы</th></tr></thead>
+            <tbody>
+              {!users && Array.from({ length: 5 }, (_, i) => <tr key={i}><td><Skeleton width="40%" height={14} /></td><td><Skeleton width={130} height={14} /></td><td /></tr>)}
+              {users?.map(user => <tr key={user.userId} {...clickableRow(() => onOpen(user))}>
+                <td><button type="button" className="lsr-access-namebtn" onClick={() => onOpen(user)}>{user.presentation.displayName}</button><div className="lsr-minor">ID {user.userId}</div></td>
+                <td className="lsr-num">{user.steamId ?? '—'}</td>
+                <td className="lsr-right"><Button size="sm" onClick={() => onOpen(user)}>Роли и доступы</Button></td>
+              </tr>)}
+            </tbody>
+          </Table>}
+      {users && !error && total > 0 && <TableFoot>
+        <span>{page * 20 + 1}–{Math.min((page + 1) * 20, total)} из {count(total, ['пользователя', 'пользователей', 'пользователей'])}{loading ? ' · обновление…' : ''}</span>
+        {pages > 1 && <div className="lsr-hstack"><Button size="sm" disabled={page <= 0 || loading} onClick={() => setPage(page - 1)}>← Назад</Button><span>Страница {page + 1} из {pages}</span><Button size="sm" disabled={page + 1 >= pages || loading} onClick={() => setPage(page + 1)}>Далее →</Button></div>}
+      </TableFoot>}
+    </Panel>
+    <div className="lsr-access-gap is-top"><Notice>API отдаёт права только для выбранного пользователя, поэтому общей таблицы выданных прав нет. Выдача роли: пользователь → роль → область → срок действия; у каждого доступа есть история изменений.</Notice></div>
+  </>;
+}
+
+function RolesTab({ roles, loading, error, onRetry }: { roles: AccessRole[] | null; loading: boolean; error: { message: string; status: number | null } | null; onRetry(): void }) {
+  return <Panel title="Матрица ролей" sub="Область определяет, где действуют права: на всей платформе, у организатора или в конкретном событии." body={false}>
+    {error && !roles ? <div className="lsr-access-pad"><ErrorState error={error.message} status={error.status} onRetry={onRetry} /></div>
+      : roles && !roles.length ? <EmptyState compact>Каталог ролей пуст.</EmptyState>
+      : <Table variant="module" label="Роли">
+          <thead><tr><th>Роль</th><th>Область</th><th>Возможности</th><th>Разрешения</th></tr></thead>
+          <tbody>
+            {!roles && loading && Array.from({ length: 4 }, (_, i) => <tr key={i}>{[0, 1, 2, 3].map(c => <td key={c}><Skeleton height={14} width="70%" /></td>)}</tr>)}
+            {roles?.map(item => <tr key={item.code}>
+              <td><div className="lsr-primary">{item.title}</div><div className="lsr-minor">{item.code}</div></td>
+              <td>{item.scopeTypes.map(type => scopeNames[type]).join(' · ')}</td>
+              <td>{item.description}</td>
+              <td><details className="lsr-access-details"><summary>{count(item.permissions.length, ['разрешение', 'разрешения', 'разрешений'])}</summary><div className="lsr-chiplist" style={{ marginTop: 8 }}>{item.permissions.map(permission => <span key={permission} className="lsr-small-tag">{permission}</span>)}</div></details></td>
+            </tr>)}
+          </tbody>
+        </Table>}
+  </Panel>;
 }
