@@ -1,0 +1,94 @@
+{
+  "items": [
+    {
+      "id": "101",
+      "key": "example-race-1",
+      "title": "Пример гонки 1",
+      "type": "RACE",
+      "status": "PENDING",
+      "executionId": null,
+      "plannedStartsAt": "2026-10-12T15:00:00.000Z",
+      "estimatedEndsAt": "2026-10-12T16:00:00.000Z",
+      "startedAt": null,
+      "finishedAt": null,
+      "actualParticipantIds": [],
+      "displayStatus": {
+        "code": "SCHEDULED",
+        "label": "Заезд запланирован",
+        "reason": null,
+        "effectiveAt": null,
+        "observedAt": "2026-10-11T12:00:00.000Z",
+        "freshness": "CURRENT"
+      },
+      "group": {
+        "key": "week-1",
+        "title": "Неделя 1",
+        "kind": "WEEK"
+      },
+      "progress": [],
+      "resultIds": [],
+      "sessions": []
+    },
+    {
+      "id": "102",
+      "key": "example-race-2",
+      "title": "Пример гонки 2",
+      "type": "RACE",
+      "status": "PENDING",
+      "executionId": null,
+      "plannedStartsAt": "2026-10-18T15:00:00.000Z",
+      "estimatedEndsAt": "2026-10-18T16:00:00.000Z",
+      "startedAt": null,
+      "finishedAt": null,
+      "actualParticipantIds": [],
+      "displayStatus": {
+        "code": "SCHEDULED",
+        "label": "Заезд запланирован",
+        "reason": null,
+        "effectiveAt": null,
+        "observedAt": "2026-10-11T12:00:00.000Z",
+        "freshness": "CURRENT"
+      },
+      "group": {
+        "key": "week-1",
+        "title": "Неделя 1",
+        "kind": "WEEK"
+      },
+      "progress": [],
+      "resultIds": [],
+      "sessions": []
+    },
+    {
+      "id": "103",
+      "key": "example-race-3",
+      "title": "Пример гонки 3",
+      "type": "RACE",
+      "status": "PENDING",
+      "executionId": null,
+      "plannedStartsAt": "2026-10-19T15:00:00.000Z",
+      "estimatedEndsAt": "2026-10-19T16:00:00.000Z",
+      "startedAt": null,
+      "finishedAt": null,
+      "actualParticipantIds": [],
+      "displayStatus": {
+        "code": "SCHEDULED",
+        "label": "Заезд запланирован",
+        "reason": null,
+        "effectiveAt": null,
+        "observedAt": "2026-10-11T12:00:00.000Z",
+        "freshness": "CURRENT"
+      },
+      "group": {
+        "key": "week-2",
+        "title": "Неделя 2",
+        "kind": "WEEK"
+      },
+      "progress": [],
+      "resultIds": [],
+      "sessions": []
+    }
+  ],
+  "nextAfterId": null,
+  "registrations": [],
+  "dependencies": null
+}
