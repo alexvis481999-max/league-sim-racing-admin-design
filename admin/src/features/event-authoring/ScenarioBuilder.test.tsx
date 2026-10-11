@@ -280,6 +280,7 @@ it('shows sections after organizer and format selection, and colors only visited
   });
   render(<ScenarioBuilder />);
   expect(screen.queryByRole('tab')).toBeNull();
+  fireEvent.click(await screen.findByRole('button', { name: /Assetto Corsa/ }));
   fireEvent.click(await screen.findByRole('button', { name: /Клуб/ }));
   expect(screen.queryByRole('tab')).toBeNull();
   fireEvent.click(await screen.findByRole('button', { name: /Разовая гонка/ }));

@@ -36,12 +36,11 @@ export interface ScenarioBuilderProps {
   initialDocument?: Document;
   onSaved?: (draft: Draft) => void;
   onPublished?: (eventId: string) => void;
-  onClose?: () => void;
   /** Page heading in edit mode: the event settings screen owns the title and the tabs under it. */
   heading?: { title: string; description?: string; below?: ReactNode; extraActions?: ReactNode };
   initialStep?: Step;
 }
-export function ScenarioBuilder({ descriptionOnly = false, draftId, initialDocument, onSaved, onPublished, onClose, edit, onEdited, heading, initialStep }: ScenarioBuilderProps) {
+export function ScenarioBuilder({ descriptionOnly = false, draftId, initialDocument, onSaved, onPublished, edit, onEdited, heading, initialStep }: ScenarioBuilderProps) {
   const scenarioInputs = useRef(new Map<string, Settings>());
   const [visited, setVisited] = useState<Set<string>>(new Set());
   const [focusPath, setFocusPath] = useState<string | null>(null);
@@ -84,7 +83,6 @@ export function ScenarioBuilder({ descriptionOnly = false, draftId, initialDocum
     </>
   ) : (
     <>
-      {onClose && <Button disabled={disabled} onClick={onClose}>← К событиям</Button>}
       {descriptor && !picking && <Button disabled={disabled} onClick={() => setPicking(true)}>Сменить тип</Button>}
       <Button disabled={disabled || loading || !!draft?.publishedEventId} onClick={() => void save(false)}>Сохранить черновик</Button>
       <Button variant="primary" disabled={busy || loading || (!resolution?.canPublish && !publicationPending) || !catalog || !!draft?.publishedEventId} onClick={() => void save(true)}>{publicationPending ? 'Проверить публикацию' : 'Проверить и опубликовать'}</Button>
@@ -97,8 +95,8 @@ export function ScenarioBuilder({ descriptionOnly = false, draftId, initialDocum
         <EditingRestrictions.Provider value={editRestrictions}>
           <FieldCapabilities.Provider value={descriptor}>
             {heading ? <PageHeader title={heading.title} description={heading.description} actions={actions} /> : (
-              <PageHeader overline={`Создание события${descriptor ? ' / ' + descriptor.title : ''}`} title={title}
-                description={descriptor ? help.program : 'Организатор → тип события → настройки. Доступные варианты определяет сервер с учётом прав и ограничений.'} actions={actions} />
+              <PageHeader overline={descriptor && !picking ? `Создание события / ${descriptor.title}` : 'События / Создать'} title={descriptor && !picking ? title : 'Создание события'}
+                description={descriptor && !picking ? typeHints[descriptor.code] ?? help.program : 'Игра → Организатор → Тип события → Настройки'} actions={actions} />
             )}
             {heading?.below}
             <div className="lsr-stack is-tight" style={{ marginBottom: 14 }}>
@@ -228,35 +226,66 @@ export function ScenarioBuilder({ descriptionOnly = false, draftId, initialDocum
 }
 
 type Catalog = NonNullable<ReturnType<typeof useScenarioBuilder>['catalog']>;
+const typeHints: Record<string, string> = {
+  weekly: 'Повторяющиеся старты в течение недели, календарь недель, трассы и переопределения программы.',
+  championship: 'Этапы с практикой и гонкой, общий зачёт и допуск на уровне события.',
+  circuit_single_race: 'Одна гонка с регистрацией, квалификацией и результатами по сплитам.',
+  practice: 'Открытая тренировочная сессия с мониторингом подключений.',
+  time_attack: 'Окно попыток и таблица лучших кругов.',
+  double_elimination_tournament: 'Турнирная сетка, дуэли, основная и нижняя сетки.',
+};
+/** Game → organizer → scenario, as in the v16 creator. Availability and reasons come from the server catalog. */
 function Picker({ catalog, organizers, organizerId, scenarioCode, disabled, onOrganizer, onScenario, onCancel }: { catalog: Catalog | null; organizers: { id: string; name: string }[]; organizerId: string; scenarioCode: string | null; disabled: boolean; onOrganizer: (id: string) => void; onScenario: (code: string) => void; onCancel?: () => void }) {
+  const current = catalog?.items.find((i) => i.code === scenarioCode);
+  const [game, setGame] = useState<string>(current?.gameCode ?? '');
+  const [stage, setStage] = useState<'game' | 'organizer' | 'type'>(current ? 'type' : organizerId ? 'type' : 'game');
   if (!catalog) return <Panel><LoadingBlock rows={4} label="Загружаем доступные сценарии" /></Panel>;
+  const gameTitle = catalog.games.find((g) => g.code === game)?.title;
+  const organizer = organizers.find((o) => o.id === organizerId);
+  const effectiveStage = !game && stage !== 'game' ? 'game' : stage === 'type' && !organizerId ? 'organizer' : stage;
+  const steps = [
+    { id: 'game' as const, title: 'Игра', value: gameTitle ?? 'Не выбрана' },
+    { id: 'organizer' as const, title: 'Организатор', value: organizer?.name ?? 'Не выбран' },
+    { id: 'type' as const, title: 'Тип события', value: current?.title ?? 'Выбор сценария' },
+  ];
+  const reachable = (id: (typeof steps)[number]['id']) => id === 'game' || (id === 'organizer' && !!game) || (id === 'type' && !!game && !!organizerId);
+  const card = (key: string, title: string, sub: string, cta: string, selected: boolean, onClick: () => void, off = false, glyph = '▣') => (
+    <button key={key} type="button" disabled={disabled || off} title={off ? sub : undefined} aria-pressed={selected} className={`lsr-pickcard${selected ? ' is-active' : ''}`} onClick={onClick}>
+      <span className="lsr-pickglyph" aria-hidden="true">{glyph}</span>
+      <b>{title}</b><span className="lsr-mutedline">{sub}</span>
+      {!off && <span className="lsr-link">{cta} →</span>}
+    </button>
+  );
   return (
     <div className="lsr-stack">
-      <section className="lsr-formgroup">
-        <h3>1. Организатор</h3>
-        <p>Игра: {catalog.games.map((g) => g.title).join(', ')}. Организатор определяет лимиты и доступные типы событий.</p>
-        {organizers.length ? (
-          <div className="lsr-cards-inline" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 10 }} data-field-path="event.organizerId">
-            {organizers.map((o) => (
-              <button key={o.id} type="button" disabled={disabled} className={`lsr-item-line is-clickable${o.id === organizerId ? ' is-active' : ''}`} style={{ background: o.id === organizerId ? undefined : '#fff', textAlign: 'left' }} aria-pressed={o.id === organizerId} onClick={() => onOrganizer(o.id)}>
-                <span><b>{o.name}</b><div className="lsr-mutedline">ID {o.id}</div></span><span className="lsr-chev">{o.id === organizerId ? '✓' : '›'}</span>
-              </button>
-            ))}
-          </div>
-        ) : <EmptyState compact>Нет доступных организаторов.</EmptyState>}
-      </section>
-      {organizerId && (
-        <section className="lsr-formgroup">
-          <h3>2. Тип события</h3>
-          <p>Доступные сценарии и причины недоступности приходят с сервера.</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(250px,1fr))', gap: 10 }} data-field-path="scenarioCode">
-            {catalog.items.map((item) => (
-              <button key={item.code} type="button" disabled={disabled || !item.enabled} title={item.reason ?? undefined} className={`lsr-item-line is-clickable${item.code === scenarioCode ? ' is-active' : ''}`} style={{ background: item.code === scenarioCode ? undefined : '#fff', textAlign: 'left', alignItems: 'flex-start' }} aria-pressed={item.code === scenarioCode} onClick={() => onScenario(item.code)}>
-                <span><b>{item.title}</b><div className="lsr-mutedline">{item.enabled ? 'Выбрать тип →' : item.reason}</div></span>
-              </button>
-            ))}
-          </div>
-          {onCancel && <div style={{ marginTop: 12 }}><Button onClick={onCancel}>Отмена</Button></div>}
+      <div className="lsr-pickersteps">
+        {steps.map((s, i) => (
+          <button key={s.id} type="button" disabled={!reachable(s.id)} className={effectiveStage === s.id ? 'is-active' : ''} onClick={() => setStage(s.id)}>
+            <span className="lsr-step-num">{i + 1}</span><span><b>{s.title}</b><small>{s.value}</small></span>
+          </button>
+        ))}
+      </div>
+      {effectiveStage === 'game' && (
+        <section>
+          <h2 className="lsr-pick-title">Выберите игру</h2>
+          <p className="lsr-page-desc" style={{ marginBottom: 18 }}>Сначала укажите симулятор. После этого будут доступны организаторы и подходящие сценарии.</p>
+          <div className="lsr-pickgrid">{catalog.games.map((g) => card(g.code, g.title, 'Игра из каталога сценариев сервера', 'Выбрать игру', g.code === game, () => { setGame(g.code); setStage('organizer'); }))}</div>
+        </section>
+      )}
+      {effectiveStage === 'organizer' && (
+        <section data-field-path="event.organizerId">
+          <h2 className="lsr-pick-title">Выберите организатора</h2>
+          <p className="lsr-page-desc" style={{ marginBottom: 18 }}>Организатор определяет права, лимиты и доступные типы событий.</p>
+          {organizers.length ? <div className="lsr-pickgrid">{organizers.map((o) => card(o.id, o.name, `Организатор · ID ${o.id}`, 'Выбрать организатора', o.id === organizerId, () => { onOrganizer(o.id); setStage('type'); }, false, '♧'))}</div>
+            : <EmptyState compact>Нет доступных организаторов.</EmptyState>}
+        </section>
+      )}
+      {effectiveStage === 'type' && (
+        <section data-field-path="scenarioCode">
+          <h2 className="lsr-pick-title">Выберите тип события</h2>
+          <p className="lsr-page-desc" style={{ marginBottom: 18 }}>Доступные сценарии и причины недоступности приходят с сервера с учётом организатора и прав.</p>
+          <div className="lsr-pickgrid">{catalog.items.filter((i) => !game || i.gameCode === game).map((item) => card(item.code, item.title, item.enabled ? typeHints[item.code] ?? item.code : item.reason ?? 'Недоступно', 'Выбрать тип', item.code === scenarioCode, () => onScenario(item.code), !item.enabled, '◎'))}</div>
+          {onCancel && <div style={{ marginTop: 14 }}><Button onClick={onCancel}>Отмена</Button></div>}
         </section>
       )}
     </div>

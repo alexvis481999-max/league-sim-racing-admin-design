@@ -51,7 +51,6 @@ export function EventAuthoringPage() {
       onSaved={(row) => {
         if (!draft) window.history.replaceState(null, '', '/events/new?draft=' + row.id);
       }}
-      onClose={() => navigate('/events')}
     />
   );
 }
