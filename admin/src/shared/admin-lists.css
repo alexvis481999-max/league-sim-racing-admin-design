@@ -1,18 +1,22 @@
-.admin-page-back{margin-bottom:-8px!important}
-.admin-page-back .MuiButton-root{padding-left:0;min-height:32px}
-.admin-list-record{position:relative;display:flex;align-items:center;gap:20px;padding:18px 16px;border-bottom:1px solid var(--mui-palette-divider,rgba(128,140,160,.22));min-width:0;transition:background-color .15s ease}
-.admin-list-record.is-interactive:hover,.admin-list-record:has(.admin-record-target:focus-visible){background:var(--mui-palette-action-hover,rgba(128,140,160,.07))}
+/* Shared list records and MUI tables inside module pages, aligned with design v16 (see ui/v16/v16.css). */
+.admin-page-back{margin-bottom:12px}
+.admin-list-toolbar{padding:0 0 4px}
+.admin-list-toolbar .lsr-search{max-width:420px}
+.admin-list-record{position:relative;display:flex;align-items:center;gap:20px;padding:15px 18px;border-bottom:1px solid var(--lsr-line2);min-width:0;background:#fff;transition:background-color .15s ease}
+.admin-list-record:first-child{border-top-left-radius:11px;border-top-right-radius:11px}
+.admin-list-record.is-interactive:hover,.admin-list-record:has(.admin-record-target:focus-visible){background:#f7f9fd}
 .admin-record-target{position:absolute;inset:0;z-index:1;width:100%;height:100%;border:0;background:transparent;cursor:pointer;border-radius:0}
-.admin-record-target:focus-visible{outline:2px solid var(--mui-palette-primary-main,#ff5a1f);outline-offset:-2px}
+.admin-record-target:focus-visible{outline:2px solid #85aaff;outline-offset:-2px}
 .admin-record-target:disabled{cursor:default}
-.admin-record-id{flex:0 0 5ch;font-variant-numeric:tabular-nums;font-family:monospace!important;overflow-wrap:anywhere}
+.admin-record-id{flex:0 0 6ch;font-variant-numeric:tabular-nums;font-size:12px!important;color:#6d7c91!important;font-weight:650!important;overflow-wrap:anywhere}
 .admin-record-copy{flex:1;min-width:0;overflow-wrap:anywhere}
-.admin-record-title{font-weight:700!important;line-height:1.45!important;margin-bottom:4px!important}
+.admin-record-copy .MuiTypography-body2{font-size:12px;color:var(--lsr-sub)}
+.admin-record-title{font-weight:750!important;font-size:14px!important;color:var(--lsr-ink);line-height:1.45!important;margin-bottom:4px!important}
 .admin-record-actions{position:relative;z-index:2;display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px;flex-shrink:0}
-.admin-record-chevron{flex-shrink:0;opacity:.5}
-.admin-page .MuiTableHead-root .MuiTableCell-root{font-size:12px;font-weight:600;color:var(--mui-palette-text-secondary,#8792a2);white-space:nowrap;padding-top:12px;padding-bottom:12px}
-.admin-page .MuiTableBody-root .MuiTableCell-root{padding-top:14px;padding-bottom:14px}
+.admin-record-chevron{flex-shrink:0;color:#9aa6b6}
+.admin-page .MuiTableContainer-root,.admin-section .MuiTableContainer-root{border:1px solid var(--lsr-line);border-radius:10px}
 .admin-page .admin-clickable-row{cursor:pointer}
-.admin-page .admin-clickable-row:focus-visible{outline:2px solid var(--mui-palette-primary-main,#ff5a1f);outline-offset:-2px}
-@media(max-width:700px){.admin-list-record{gap:12px;padding:16px 8px;flex-wrap:wrap}.admin-record-actions{flex-basis:100%;justify-content:flex-start;margin-left:0}.admin-record-chevron{position:absolute;right:8px;top:21px}.admin-record-copy{padding-right:18px}}
+.admin-page .admin-clickable-row:hover td{background:#f3f7ff}
+.admin-page .admin-clickable-row:focus-visible{outline:2px solid #85aaff;outline-offset:-2px}
+@media(max-width:700px){.admin-list-record{gap:12px;padding:14px 12px;flex-wrap:wrap}.admin-record-actions{flex-basis:100%;justify-content:flex-start;margin-left:0}.admin-record-chevron{position:absolute;right:10px;top:19px}.admin-record-copy{padding-right:18px}}
 @media(prefers-reduced-motion:reduce){.admin-list-record{transition:none}}

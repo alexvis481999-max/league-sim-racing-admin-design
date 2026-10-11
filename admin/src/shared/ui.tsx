@@ -1,20 +1,15 @@
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
-import AddIcon from '@mui/icons-material/Add';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { Link } from 'react-router-dom';
 import './admin-lists.css';
-import ClearIcon from '@mui/icons-material/Clear';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import SearchIcon from '@mui/icons-material/Search';
 import WifiIcon from '@mui/icons-material/Wifi';
 import WifiOffIcon from '@mui/icons-material/WifiOff';
-import { Box, Button, Chip, Collapse, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import { Box, Collapse, Grid, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
 import type { TextFieldProps } from '@mui/material/TextField';
 import type { AsyncState } from './asyncState';
 import { dismissNotification, showNotification } from './notifications';
-import { uiFoundation } from '../../../shared/ui-foundation';
+import { Button as V16Button, EmbeddedContext, PageHeader } from '../ui/v16';
 
 export function FieldGrid({ children }: { children: ReactNode }) {
   return (
@@ -55,64 +50,44 @@ export function JsonBlock({ value, maxHeight = 340 }: { value: unknown; maxHeigh
 }
 
 export function Page({ title, subtitle, actions, back, children, embedded=false }: { embedded?:boolean; title: string; subtitle?: string; actions?: ReactNode; back?:ReactNode; children: ReactNode }) {
-  if(embedded)return <Stack spacing={2} sx={{minWidth:0}}>{actions}{children}</Stack>;
+  if(embedded)return <EmbeddedContext.Provider value><div className="lsr-stack">{actions&&<div className="lsr-page-actions" style={{justifyContent:'flex-start'}}>{actions}</div>}{children}</div></EmbeddedContext.Provider>;
   return (
-    <Stack className="admin-page" spacing={uiFoundation.pageGap} sx={{ minWidth: 0 }}>
-      {back && <Box className="admin-page-back">{back}</Box>}
-      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} gap={1.5}>
-        <Box>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 800, letterSpacing: 0, fontSize: { xs: '1.5rem', md: '2rem' }, overflowWrap: 'anywhere' }}>
-            {title}
-          </Typography>
-          {subtitle ? (
-            <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-              {subtitle}
-            </Typography>
-          ) : null}
-        </Box>
-        {actions ? <PageActions>{actions}</PageActions> : null}
-      </Stack>
-      {children}
-    </Stack>
+    <div className="admin-page lsr-stack" style={{ gap: 0 }}>
+      {back && <div className="admin-page-back">{back}</div>}
+      <PageHeader title={title} description={subtitle} actions={actions} />
+      <div className="lsr-stack">{children}</div>
+    </div>
   );
 }
 
 export function PageActions({ children }: { children: ReactNode }) {
-  return (
-    <Stack direction="row" spacing={1} alignItems="center" useFlexGap flexWrap="wrap" sx={{ justifyContent: { xs: 'flex-start', sm: 'flex-end' } }}>
-      {children}
-    </Stack>
-  );
+  return <div className="lsr-page-actions">{children}</div>;
 }
 
 export function FilterButtons<T extends string>({ label, value, options, onChange, disabled = false }: {
   label: string; value: T; options: readonly { value: T; label: string }[];
   onChange: (value: T) => void; disabled?: boolean;
 }) {
-  return <Stack role="group" aria-label={label} direction="row" useFlexGap flexWrap="wrap" gap={0.5} alignItems="center">
-    {options.map(option => <Button key={option.value} size="small" disabled={disabled}
-      aria-label={`${label}: ${option.label}`} aria-pressed={value === option.value} onClick={() => onChange(option.value)}
-      sx={{ minHeight: 34, px: 1.5, color: value === option.value ? 'primary.main' : 'text.secondary',
-        bgcolor: value === option.value ? 'action.selected' : 'transparent',
-        fontWeight: value === option.value ? 700 : 500, transition: 'background-color 120ms ease, color 120ms ease',
-        '@media (prefers-reduced-motion: reduce)': { transition: 'none' } }}>
+  return <div className="lsr-filter-row" role="group" aria-label={label}>
+    {options.map(option => <button key={option.value} type="button" disabled={disabled}
+      className={`lsr-filter-btn${value === option.value ? ' is-active' : ''}`}
+      aria-label={`${label}: ${option.label}`} aria-pressed={value === option.value} onClick={() => onChange(option.value)}>
       {option.label}
-    </Button>)}
-  </Stack>;
+    </button>)}
+  </div>;
 }
 
 export function ListToolbar({ children }: { children: ReactNode }) {
-  return <Stack spacing={1.25} sx={{ pb: 1.5, borderBottom: 1, borderColor: 'divider', minWidth: 0,
-    '& > .MuiTextField-root': { width: '100%', maxWidth: 480 } }}>{children}</Stack>;
+  return <div className="lsr-filterbar admin-list-toolbar">{children}</div>;
 }
 
 export function MoreFilters({ children, count = 0 }: { children: ReactNode; count?: number }) {
   const [open, setOpen] = useState(false);
   const id = useId();
-  return <Box><Button size="small" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
+  return <div><button type="button" className="lsr-pillbtn" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
     Дополнительные фильтры{count ? ` · ${count}` : ''}
-  </Button><Collapse in={open}><Stack id={id} direction="row" flexWrap="wrap" useFlexGap gap={1.5}
-    sx={{ pt: 1.5, '& .MuiTextField-root': { flex: '1 1 200px', minWidth: 0 } }}>{children}</Stack></Collapse></Box>;
+  </button><Collapse in={open}><Stack id={id} direction="row" flexWrap="wrap" useFlexGap gap={1.5}
+    sx={{ pt: 1.5, '& .MuiTextField-root': { flex: '1 1 200px', minWidth: 0 } }}>{children}</Stack></Collapse></div>;
 }
 
 export function SearchField({
@@ -121,9 +96,7 @@ export function SearchField({
   onCommit,
   label = 'Поиск',
   placeholder,
-  fullWidth = true,
   disabled = false,
-  sx,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -135,13 +108,12 @@ export function SearchField({
   sx?: SxProps<Theme>;
 }) {
   const commit = () => onCommit?.(value.trim());
-
   return (
-    <TextField
-      size="small"
-      fullWidth={fullWidth}
-      label={label}
-      placeholder={placeholder}
+    <input
+      type="search"
+      className="lsr-search admin-search"
+      aria-label={label}
+      placeholder={placeholder ?? label}
       value={value}
       disabled={disabled}
       onChange={(event) => onChange(event.target.value)}
@@ -151,33 +123,11 @@ export function SearchField({
           event.preventDefault();
           commit();
         }
+        if (event.key === 'Escape' && value) {
+          onChange('');
+          onCommit?.('');
+        }
       }}
-      slotProps={{
-        input: {
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon fontSize="small" color="action" />
-            </InputAdornment>
-          ),
-          endAdornment: value ? (
-            <InputAdornment position="end">
-              <IconButton
-                size="small"
-                edge="end"
-                aria-label="Очистить поиск"
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => {
-                  onChange('');
-                  onCommit?.('');
-                }}
-              >
-                <ClearIcon fontSize="small" />
-              </IconButton>
-            </InputAdornment>
-          ) : undefined,
-        },
-      }}
-      sx={sx}
     />
   );
 }
@@ -246,15 +196,15 @@ export function useDebouncedValue<T>(value: T, delayMs = 350): T {
 }
 
 export function RefreshAction({ onClick, loading = false, label = 'Обновить' }: { onClick: () => void; loading?: boolean; label?: string }) {
-  return <Button variant="outlined" startIcon={<RefreshIcon />} onClick={onClick} disabled={loading}>{label}</Button>;
+  return <V16Button onClick={onClick} disabled={loading}>↻ {label}</V16Button>;
 }
 
 export function CreateAction({ onClick, disabled = false, label = 'Добавить' }: { onClick: () => void; disabled?: boolean; label?: string }) {
-  return <Button variant="contained" startIcon={<AddIcon />} onClick={onClick} disabled={disabled}>{label}</Button>;
+  return <V16Button variant="primary" onClick={onClick} disabled={disabled}>＋ {label}</V16Button>;
 }
 
 export function BackAction({onClick,label='Назад',disabled=false}:{onClick():void;label?:string;disabled?:boolean}) {
-  return <Button variant="text" color="inherit" startIcon={<ArrowBackIcon/>} onClick={onClick} disabled={disabled}>{label}</Button>;
+  return <button type="button" className="lsr-backtop" onClick={onClick} disabled={disabled}>← {label}</button>;
 }
 
 /** One primary hit area; independent actions remain above it and never trigger navigation. */
@@ -291,22 +241,12 @@ export function LiveStatus({ connected, connectedLabel = 'Live подключё�
 }
 
 export function Section({ title, children, actions, embedded=false }: { embedded?:boolean; title?: string; children: ReactNode; actions?: ReactNode }) {
+  if (embedded) return <div className="lsr-stack admin-section">{(title || actions) && <div className="lsr-between">{title && <h2 className="lsr-strong" style={{ margin: 0, fontSize: 15 }}>{title}</h2>}{actions}</div>}{children}</div>;
   return (
-    <Paper component="section" className="admin-section" variant="outlined" sx={{ p: embedded?0:2, borderRadius: embedded?0:2, border:embedded?0:undefined,boxShadow:embedded?'none':undefined,bgcolor:embedded?'transparent':undefined,minWidth: 0 }}>
-      <Stack spacing={1.5}>
-        {title || actions ? (
-          <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} justifyContent={title ? 'space-between' : 'flex-start'} gap={1}>
-            {title ? (
-              <Typography component="h2" variant="h6" sx={{ fontWeight: 750 }}>
-                {title}
-              </Typography>
-            ) : null}
-            {actions ? <Box sx={{ flex: title ? '0 0 auto' : 1 }}>{actions}</Box> : null}
-          </Stack>
-        ) : null}
-        {children}
-      </Stack>
-    </Paper>
+    <section className="lsr-panel admin-section">
+      {(title || actions) && <div className="lsr-panel-header">{title ? <h2>{title}</h2> : <span />}{actions ? <div className="lsr-hstack" style={{ flex: title ? '0 0 auto' : 1 }}>{actions}</div> : null}</div>}
+      <div className="lsr-panel-body"><Stack spacing={1.5}>{children}</Stack></div>
+    </section>
   );
 }
 

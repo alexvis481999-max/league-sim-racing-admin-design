@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import type { SvgIconComponent } from '@mui/icons-material';
 
 export type AnyRecord = Record<string, unknown>;
 
@@ -244,7 +243,8 @@ export type ModuleDefinition = {
   label: string;
   group: 'racing' | 'content' | 'community' | 'system';
   path: string;
-  icon: SvgIconComponent;
+  /** v16 navigation glyph. */
+  glyph: string;
   permissions: string[];
   element: ReactNode;
 };
