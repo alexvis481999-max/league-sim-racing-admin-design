@@ -58,11 +58,14 @@ on('POST', '/admin/events/:id/cancel', ({ p, body }) => versioned(p.id, body, (e
 on('POST', '/admin/events/:id/reschedule', ({ p, body }) => versioned(p.id, body, () => {}));
 on('POST', '/admin/events/:id/registrations/:key/entries/:entry/:op', ({ p, body }) => versioned(p.id, body, () => {}));
 on('GET', '/admin/events/:id/game-chat', () => ({ items: [], nextCursor: null }));
-on('GET', '/admin/audit', () => ({ items: [], nextCursor: null }));
-on('GET', '/admin/chat/threads', () => ({ items: [], nextCursor: null }));
-on('GET', '/admin/officiating/protests', () => ({ items: [], nextAfterId: null }));
 on('GET', '/games/assetto_corsa/.*', ({ path }) => referenceRoute(path) ?? fail(404, 'not_found'));
 
+// Section mocks live in ./modules/*.mjs and export register(on, helpers); see modules/README.md.
+import { readdirSync } from 'node:fs';
+for (const file of readdirSync(fileURLToPath(new URL('./modules', import.meta.url))).filter((f) => f.endsWith('.mjs')).sort()) {
+  const mod = await import(new URL('./modules/' + file, import.meta.url));
+  mod.register?.(on, { fail, page, NOW });
+}
 function versioned(id, body, apply) {
   const e = findEvent(id);
   if (!e) return fail(404, 'event_not_found');
