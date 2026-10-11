@@ -1,4 +1,4 @@
-import { Button, Fields, Notice, Panel, SelectField, TextArea, TextField } from '../../ui/v16';
+import { Button, Fields, Notice, Panel, SaveBar, SelectField, TextArea, TextField } from '../../ui/v16';
 import { GameFields, OrganizerField } from '../../features/standalone/GameFields';
 import { useUnsavedChanges } from '../../features/standalone/EditorSections';
 import type { Config } from './practice-types';
@@ -106,23 +106,22 @@ export function PracticeServerEditor({
       <section className="lsr-stack lsr-practice-game" id={sectionIds.conditions} aria-label="Трасса, машины и условия">
         <GameFields organizerId={config.organizerId} value={config.game} onChange={(game) => patch({ game })} disabled={disabled} />
       </section>
-      <div className="lsr-practice-savebar">
-        <div className="lsr-practice-savebar-status">
-          <span role="status" className={dirty ? 'is-dirty' : undefined}>{dirty ? 'Есть несохранённые изменения' : 'Изменений нет'}</span>
-          {!!issues.length && (
-            <div className="lsr-practice-issues" role="group" aria-label="Нужно исправить">
-              <span>Нужно исправить:</span>
-              {issues.map((issue, i) => <button type="button" key={i} className="lsr-link is-sm" onClick={() => jump(issue.section)}>{issue.message}</button>)}
-            </div>
-          )}
-        </div>
-        <div className="lsr-hstack">
+      <SaveBar
+        dirty={dirty}
+        status={dirty ? 'Есть несохранённые изменения' : 'Изменений нет'}
+        extra={!!issues.length && (
+          <div className="lsr-practice-issues" role="group" aria-label="Нужно исправить">
+            <span>Нужно исправить:</span>
+            {issues.map((issue, i) => <button type="button" key={i} className="lsr-link is-sm" onClick={() => jump(issue.section)}>{issue.message}</button>)}
+          </div>
+        )}
+        actions={<>
           <Button disabled={editing && !dirty} onClick={onCancel}>{editing ? 'Отменить изменения' : 'Отменить'}</Button>
           <Button variant="primary" disabled={disabled || issues.length > 0} onClick={onSave}>
             {editing ? 'Сохранить для следующего цикла' : 'Создать остановленный сервер'}
           </Button>
-        </div>
-      </div>
+        </>}
+      />
     </div>
   );
 }

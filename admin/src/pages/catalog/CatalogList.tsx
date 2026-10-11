@@ -4,14 +4,14 @@ import { apiFetch } from '../../shared/api';
 import { useRealtimeRefresh } from '../../shared/realtime';
 import type { AccessOrganizer, CatalogItem } from '../../shared/types';
 import { useDebouncedValue } from '../../shared/ui';
-import { Button, EmptyState, ErrorState, Panel, SearchInput, Skeleton, StatusBadge, Table, TableFoot, clickableRow, shortDateTime } from '../../ui/v16';
+import { Button, EmptyState, ErrorState, Panel, PillButtons, SearchInput, Skeleton, StatusBadge, Table, TableFoot, clickableRow, shortDateTime } from '../../ui/v16';
 import { catalogActorLabel } from './catalogActor';
 import { loadError, type LoadError } from './catalogData';
 import {
   GAME_LABELS, catalogItemImageUrl, isGameTag, itemInfo, itemProblem, ownerLabel, statusLike, statusTone, toggleFilterTag, usageLabel,
   type CarBrand, type CatalogPage, type KindDef,
 } from './catalogModel';
-import { ChipFilter, InlineTags, Thumb } from './catalogUi';
+import { InlineTags, Thumb } from './catalogUi';
 
 const PAGE_SIZE = 40;
 const GAME_FILTERS = [{ value: '', label: 'Все игры' }, { value: 'ac', label: 'AC' }, { value: 'acc', label: 'ACC' }, { value: 'iracing', label: 'iRacing' }] as const;
@@ -79,13 +79,13 @@ export function CatalogItemsPanel({ def, search, onSearch, tags, onTags, tagOpti
     <Panel title={`Материалы · ${def.label}`} body={false} shadow>
       <div className="lsr-toolbar lsr-cat-toolbar">
         <SearchInput value={query} onChange={setQuery} onCommit={(value) => onSearch(value)} placeholder="Название или код" label="Поиск материалов" wide />
-        <ChipFilter label="Игра" value={game} options={GAME_FILTERS} onChange={(value) => onTags([...tags.filter((tag) => !isGameTag(tag)), ...(value ? [value] : [])])} />
+        <PillButtons label="Игра" value={game} options={GAME_FILTERS} onChange={(value) => onTags([...tags.filter((tag) => !isGameTag(tag)), ...(value ? [value] : [])])} />
       </div>
       {(extraOptions.length > 0 || selectedExtra.length > 0) && (
         <div className="lsr-cat-tagbar" role="group" aria-label="Теги">
           <span>Теги</span>
           {[...new Set([...selectedExtra, ...extraOptions])].slice(0, 30).map((tag) => (
-            <button key={tag} type="button" className={`lsr-cat-chip is-sm${tags.includes(tag) ? ' is-active' : ''}`} aria-pressed={tags.includes(tag)} onClick={() => onTags(toggleFilterTag(tags, tag))}>{tag}</button>
+            <button key={tag} type="button" className={`lsr-pillbtn is-sm${tags.includes(tag) ? ' is-active' : ''}`} aria-pressed={tags.includes(tag)} onClick={() => onTags(toggleFilterTag(tags, tag))}>{tag}</button>
           ))}
           {selectedExtra.length > 0 && <Button size="sm" variant="plain" onClick={() => onTags(tags.filter(isGameTag))}>Сбросить теги</Button>}
         </div>

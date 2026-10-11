@@ -18,14 +18,15 @@
 
 - Каркас: `usePageChrome({ crumbs, back, variant })` — крошки (строки), кнопка «Назад», геометрия `module` (по умолчанию) или `event`. `PageHeader({ overline, title, description, actions })`. `Tabs` (подчёркнутые вкладки: `variant="module"` — компактные модульные), `SubTabs` (сегменты внутри раздела, как `mm-tabs`).
 - Кнопки: `Button` (`variant`: `default` | `primary` | `soft` | `plain` | `danger` | `danger-solid`, `size="sm"`, `to` для ссылки), `TextLink` («Открыть →»), `ActionButton` — команда, разрешённая сервером (`{code, enabled, reason}`): недоступная показывает причину.
-- Панели и данные: `Panel({ title, sub, actions, foot, body })`, `FormGroup`, `MetaGrid`/`Meta`, `KvGrid`, `InfoTiles`, `DateGrid`, `InfoPills`, `Stats` (плашки списка событий), `Kpis` (модульные KPI `adm-kpi`), `RowItem`, `Timeline`, `Details` (технические подробности JSON).
+- Панели и данные: `Panel({ title, sub, actions, foot, body })`, `FormGroup`, `MetaGrid`/`Meta`, `KvGrid`, `InfoTiles`, `DateGrid`, `InfoPills`, `Stats` (плашки списка событий), `Kpis` (модульные KPI `adm-kpi`), `RowItem`, `Timeline`, `StepList` (вертикальная последовательность шагов: ход матча, история протеста), `Details` (технические подробности JSON).
+- Карточка записи: `RecordTopline({ back, current })` («← Список · запись», `adm-topline`), `RecordHead({ media, title, badges, meta, actions })` (`adm-state`). Используются в доступах, пилотах, судействе, аудите, чатах.
 - Статусы: `StatusBadge({ status, tone, variant })`; `variant`: `status` (экраны события), `pill` (список событий), `badge` (модули). Текст — серверная подпись (`label`); цвет — правило UI: `blockTone`, `eventTone` или `recordTone(code, map)`. Неизвестный код — нейтральный цвет. `freshness: 'UNCERTAIN'` — жёлтый.
-- Таблицы и фильтры: `Table({ variant })` (`list`, `weeks`, `module`), `clickableRow(onOpen)` (вся строка открывает запись, вложенные кнопки/ссылки работают отдельно), `TableFoot`, `Toolbar`, `SearchInput`, `SelectInput`, `FilterButtons`, `PillButtons`, `LoadMore`.
-- Поля и диалоги: `Fields`, `Field`, `TextField`, `TextArea`, `SelectField`, `Checkbox`, `Dialog({ title, description, actions })`.
+- Таблицы и фильтры: `Table({ variant })` (`list`, `weeks`, `module`), `clickableRow(onOpen)` (вся строка открывает запись, вложенные кнопки/ссылки работают отдельно), `TableFoot`, `Toolbar`, `SearchInput`, `SelectInput`, `FilterButtons`, `PillButtons` (`size`: `sm` | `lg`), `Segmented` (переключатель внутри панели: тема, размер превью), `LoadMore`.
+- Поля и диалоги: `Fields`, `Field`, `TextField`, `TextArea`, `SelectField`, `Checkbox`, `Dialog({ title, description, actions })`, `SaveBar({ status, dirty, extra, actions })` — низ формы с состоянием сохранения и командами, прилипает к низу длинных форм (конструктор события, сервер практики, организатор, выдача роли).
 - Состояния: `AsyncView({ resource, isEmpty, empty })` — раздельно загрузка, ошибка (403 → «Недостаточно прав», не пустой список), пусто, данные; при фоновом обновлении старые данные остаются на экране. `LoadingBlock`, `EmptyState`, `ErrorState`, `Notice({ tone })`.
 - Форматирование: `shortDateTime`, `dateTime`, `fullDate`, `clock`, `period`, `longDay`, `weekday`, `count`, `lapTime` — только для отображения, во временной зоне сущности, `null` → «—».
 
-Модульные страницы макета: заголовок страницы → (`Kpis`) → `Tabs variant="module"` → `Panel` со `Toolbar` и `Table variant="module"`; карточка записи — `usePageChrome` с крошками раздела, `PageHeader` записи, `Tabs` деталей, двухколоночная сетка `lsr-cols-module` (основное + боковые панели).
+Модульные страницы макета: заголовок страницы → (`Kpis`) → `Tabs variant="module"` → `Panel` со `Toolbar` и `Table variant="module"`; карточка записи — `usePageChrome` с крошками раздела, `RecordTopline` + `RecordHead` (или `PageHeader` записи), `Tabs` деталей, двухколоночная сетка `lsr-cols-module` (основное + боковые панели).
 
 ## Правила (из задания)
 

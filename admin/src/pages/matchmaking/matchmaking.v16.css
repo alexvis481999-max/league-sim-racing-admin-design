@@ -58,10 +58,6 @@
 .lsr-mm-score { grid-row: 1; grid-column: 2; text-align: center; }
 .lsr-mm-score b { display: block; font-size: 28px; font-weight: 800; color: var(--lsr-ink); line-height: 1.15; font-variant-numeric: tabular-nums; }
 .lsr-mm-score small { font-size: 11px; color: var(--lsr-sub); }
-.lsr-mm-steps { display: grid; gap: 10px; }
-.lsr-mm-step { border-left: 2px solid #d8e3f4; padding: 0 0 13px 13px; font-size: 12px; color: #596981; }
-.lsr-mm-step b { display: block; color: var(--lsr-ink); font-size: 12px; }
-.lsr-mm-step:last-child { padding-bottom: 0; }
 .lsr-mm-rounds { display: grid; gap: 14px; }
 .lsr-mm-round-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 13px; color: var(--lsr-sub); }
 .lsr-mm-round-head b { color: var(--lsr-blue); }

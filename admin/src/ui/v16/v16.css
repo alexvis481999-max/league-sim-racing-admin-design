@@ -415,6 +415,31 @@ body { margin: 0; background: var(--lsr-bg); color: var(--lsr-ink); font: 14px/1
 .lsr-quicklist td:last-child { text-align: right; font-weight: 700; }
 .lsr-quicklist tr:last-child td { border-bottom: 0; }
 .lsr-savebar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 13px 18px; }
+.lsr-savebar.is-sticky { position: sticky; bottom: 12px; z-index: 3; box-shadow: var(--lsr-shadow); }
+.lsr-savebar-status { display: grid; gap: 4px; min-width: 0; flex: 1; font-size: 12px; color: var(--lsr-sub); }
+.lsr-savebar-status .is-dirty { color: #865b25; font-weight: 650; }
+@media (max-width: 700px) { .lsr-savebar > .lsr-hstack { width: 100%; } .lsr-savebar > .lsr-hstack .lsr-btn { flex: 1; } }
+/* Record pages: adm-topline + adm-state */
+.lsr-topline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--lsr-sub); margin-bottom: 15px; font-size: 12px; }
+.lsr-topline > button { appearance: none; background: none; border: 0; color: var(--lsr-blue); font: inherit; font-weight: 650; padding: 0; cursor: pointer; }
+.lsr-topline > button:hover:not(:disabled) { text-decoration: underline; }
+.lsr-topline > button:disabled { color: var(--lsr-sub); cursor: default; }
+.lsr-topline > b { color: var(--lsr-text); font-weight: 650; overflow-wrap: anywhere; }
+.lsr-recordhead { display: flex; align-items: center; gap: 14px; margin: 0 0 15px; flex-wrap: wrap; }
+.lsr-recordhead-main { flex: 1; min-width: 220px; }
+.lsr-recordhead-title { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.lsr-recordhead h1 { margin: 0; font-size: 18px; font-weight: 750; letter-spacing: -.3px; color: var(--lsr-ink); overflow-wrap: anywhere; }
+.lsr-recordhead-meta { margin-top: 4px; font-size: 12px; color: var(--lsr-sub); }
+@media (max-width: 560px) { .lsr-recordhead .lsr-page-actions { width: 100%; justify-content: flex-start; } }
+.lsr-steplist { display: grid; gap: 10px; }
+.lsr-steplist-item { border-left: 2px solid #d8e3f4; padding: 0 0 13px 13px; font-size: 12px; color: #596981; overflow-wrap: anywhere; }
+.lsr-steplist-item > b { display: block; color: var(--lsr-ink); font-size: 12px; }
+.lsr-steplist-item:last-child { padding-bottom: 0; }
+.lsr-segment { display: inline-flex; gap: 3px; background: #f5f7fa; border: 1px solid var(--lsr-line); border-radius: 9px; padding: 3px; }
+.lsr-segment button { border: 0; background: transparent; border-radius: 6px; padding: 5px 10px; font-size: 12px; font-weight: 700; color: #60728d; white-space: nowrap; }
+.lsr-segment button:hover { color: #285ec5; }
+.lsr-segment button.is-active { background: #fff; color: #285ec5; box-shadow: 0 1px 4px #25385015; }
+.lsr-pillbtn.is-sm { padding: 4px 9px; }
 @media (max-width: 1100px) { .lsr-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .lsr-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 /* Nested groups (e.g. track/weather inside a week editor) read as sub-sections, not boxes. */

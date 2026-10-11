@@ -5,10 +5,7 @@ import { displayRuntimeStatus } from '../../../../shared/presentation';
 import { realtime, useRealtimeStatus } from '../../shared/realtime';
 import { OwnerGameJournal } from '../../features/standalone/OwnerGameJournal';
 import { apiFetch, ApiError } from '../../shared/api';
-import {
-  Button, EmptyState, ErrorState, Kpis, Tabs, LoadingBlock, Notice, PageHeader, Panel, PillButtons, SearchInput, StatusBadge, Table, TextLink, Toolbar,
-  clickableRow, recordTone, shortDateTime, usePageChrome, type Tone,
-} from '../../ui/v16';
+import { Button, EmptyState, ErrorState, Kpis, LoadingBlock, Meta, MetaGrid, Notice, PageHeader, Panel, PillButtons, SearchInput, StatusBadge, Table, Tabs, TextLink, Toolbar, clickableRow, recordTone, shortDateTime, type Tone, usePageChrome } from '../../ui/v16';
 import { activeSession, processFor, sessionTitle, plannedPeak, type Snapshot, type Session } from './runtime-monitoring';
 
 type Slot = Snapshot['slots'][number];
@@ -306,9 +303,6 @@ function ReservePanel({ data }: { data: Snapshot }) {
   );
 }
 
-function Fact({ label, children }: { label: ReactNode; children: ReactNode }) {
-  return <div className="lsr-runtime-fact"><div>{label}</div><b>{children ?? '—'}</b></div>;
-}
 const pluginLabels: Record<string, string> = { CURRENT: 'Актуален', FAILED: 'Ошибка', UNKNOWN: 'Нет данных', NOT_CONFIGURED: 'Не настроен' };
 
 function DaemonPanel({ data }: { data: Snapshot }) {
@@ -325,16 +319,16 @@ function DaemonPanel({ data }: { data: Snapshot }) {
         { label: 'Uptime', value: uptime(m?.uptimeSeconds) },
       ]} />
       <Panel title="Наблюдаемая система" sub={m ? undefined : 'Демон ещё не прислал метрики'}>
-        <div className="lsr-runtime-facts">
-          <Fact label="Платформа">{m ? [m.system.platform, m.system.arch].filter(Boolean).join(' / ') || '—' : '—'}</Fact>
-          <Fact label="Состояние"><StatusBadge variant="badge" status={{ code: data.status, label: data.stale ? 'Сведения устарели' : 'Связь установлена' }} tone={data.stale ? 'current' : 'done'} /></Fact>
-          <Fact label="Снимок телеметрии">{data.receivedAt ? shortDateTime(data.receivedAt) : 'Нет снимка'}</Fact>
-          <Fact label="Проверено">{shortDateTime(data.checkedAt)}</Fact>
-          <Fact label="Запущено процессов">{m ? `${running} из ${data.slots.length}` : '—'}</Fact>
-          <Fact label="Плагин">{pluginLabels[m?.plugin?.status ?? 'UNKNOWN'] ?? 'Нет данных'}</Fact>
-          <Fact label="CPU машины">{percent(m?.system.cpuPercent)}{m?.system.loadAverage?.[0] !== undefined ? ` · load ${m.system.loadAverage[0].toFixed(2)}` : ''}</Fact>
-          <Fact label="RAM машины">{used === undefined ? '—' : `${bytes(used)} / ${bytes(total)}`}<span className="lsr-runtime-dim"> · свободно {bytes(m?.system.memoryFreeBytes)}</span></Fact>
-        </div>
+        <MetaGrid columns={2}>
+          <Meta label="Платформа">{m ? [m.system.platform, m.system.arch].filter(Boolean).join(' / ') || '—' : '—'}</Meta>
+          <Meta label="Состояние"><StatusBadge variant="badge" status={{ code: data.status, label: data.stale ? 'Сведения устарели' : 'Связь установлена' }} tone={data.stale ? 'current' : 'done'} /></Meta>
+          <Meta label="Снимок телеметрии">{data.receivedAt ? shortDateTime(data.receivedAt) : 'Нет снимка'}</Meta>
+          <Meta label="Проверено">{shortDateTime(data.checkedAt)}</Meta>
+          <Meta label="Запущено процессов">{m ? `${running} из ${data.slots.length}` : '—'}</Meta>
+          <Meta label="Плагин">{pluginLabels[m?.plugin?.status ?? 'UNKNOWN'] ?? 'Нет данных'}</Meta>
+          <Meta label="CPU машины">{percent(m?.system.cpuPercent)}{m?.system.loadAverage?.[0] !== undefined ? ` · load ${m.system.loadAverage[0].toFixed(2)}` : ''}</Meta>
+          <Meta label="RAM машины">{used === undefined ? '—' : `${bytes(used)} / ${bytes(total)}`}<span className="lsr-runtime-dim"> · свободно {bytes(m?.system.memoryFreeBytes)}</span></Meta>
+        </MetaGrid>
       </Panel>
     </>
   );
@@ -354,14 +348,14 @@ function SlotDetail({ data, slot }: { data: Snapshot; slot: Slot }) {
       <div className="lsr-cols-module">
         <Panel title="Текущая работа">
           {session ? (
-            <div className="lsr-runtime-facts">
-              <Fact label="Назначение">{sessionTitle(session)} №{session.id}</Fact>
-              <Fact label="Статус"><SessionBadge session={session} /></Fact>
-              <Fact label="Начало">{session.startedAt ? shortDateTime(session.startedAt) : 'Ожидает запуска'}</Fact>
-              <Fact label="Плановое завершение">{session.estimatedEndsAt ? shortDateTime(session.estimatedEndsAt) : 'Не задано'}</Fact>
-              <Fact label="Запуск (run)">{session.runtimeRunId ?? '—'}</Fact>
-              <Fact label="Резерв">{session.reservationId ? `№${session.reservationId}` : 'Без резерва'}</Fact>
-            </div>
+            <MetaGrid columns={2}>
+              <Meta label="Назначение">{sessionTitle(session)} №{session.id}</Meta>
+              <Meta label="Статус"><SessionBadge session={session} /></Meta>
+              <Meta label="Начало">{session.startedAt ? shortDateTime(session.startedAt) : 'Ожидает запуска'}</Meta>
+              <Meta label="Плановое завершение">{session.estimatedEndsAt ? shortDateTime(session.estimatedEndsAt) : 'Не задано'}</Meta>
+              <Meta label="Запуск (run)">{session.runtimeRunId ?? '—'}</Meta>
+              <Meta label="Резерв">{session.reservationId ? `№${session.reservationId}` : 'Без резерва'}</Meta>
+            </MetaGrid>
           ) : <div className="lsr-mutedline">Сессия на этот слот не назначена.</div>}
           {session?.connectionLostAt && <Notice tone="warning">Связь потеряна {shortDateTime(session.connectionLostAt)}. Состояние уточняется — это не означает остановку.</Notice>}
           {slot.state === 'ALLOCATED' && process?.status !== 'running' && <Notice tone="warning">Слот занят, но демон не подтверждает работающий процесс. Занятость слота не доказывает, что процесс запущен.</Notice>}

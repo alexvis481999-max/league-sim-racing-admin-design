@@ -2,7 +2,7 @@ import type { PublicEvent } from '../../../../shared/public-event';
 import { Box, Chip, Paper, Stack, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { type ReactNode, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Checkbox, SelectField } from '../../ui/v16';
+import { Checkbox, Segmented, SelectField } from '../../ui/v16';
 import {
   cloneEventCardStudioConfig,
   defaultEventCardStudioConfig,
@@ -160,7 +160,7 @@ export function EventCardStudioPanel({
       <div className="lsr-cards-previews">
         <div className="lsr-cards-previews-head">
           <h3>{title}</h3>
-          <Segment
+          <Segmented
             label="Тема предпросмотра"
             value={displayedPreviewTheme}
             options={[{ value: 'dark', label: 'Тёмная тема' }, { value: 'light', label: 'Светлая тема' }]}
@@ -322,11 +322,11 @@ function EditorPanel({
             />
           </div>
           <SettingLine label="Горизонталь">
-            <Segment label="Горизонтальное выравнивание" value={config.textAlign} onChange={(value) => update('textAlign', value as EventCardStudioConfig['textAlign'])}
+            <Segmented label="Горизонтальное выравнивание" value={config.textAlign} onChange={(value) => update('textAlign', value as EventCardStudioConfig['textAlign'])}
               options={[{ value: 'left', label: 'Лево' }, { value: 'center', label: 'Центр' }, { value: 'right', label: 'Право' }]} />
           </SettingLine>
           <SettingLine label="Вертикаль">
-            <Segment label="Вертикальное положение" value={config.verticalAlign} onChange={(value) => update('verticalAlign', value as EventCardStudioConfig['verticalAlign'])}
+            <Segmented label="Вертикальное положение" value={config.verticalAlign} onChange={(value) => update('verticalAlign', value as EventCardStudioConfig['verticalAlign'])}
               options={[{ value: 'top', label: 'Верх' }, { value: 'center', label: 'Центр' }, { value: 'bottom', label: 'Низ' }]} />
           </SettingLine>
           <div className="lsr-cards-row">
@@ -386,27 +386,6 @@ function SettingLine({ label, children }: { label: string; children: ReactNode }
   return <div className="lsr-cards-line"><span>{label}</span>{children}</div>;
 }
 
-function Segment({
-  value,
-  options,
-  onChange,
-  label,
-}: {
-  value: string;
-  options: Array<{ value: string; label: string }>;
-  onChange: (value: string) => void;
-  label: string;
-}) {
-  return (
-    <div className="lsr-cards-segment" role="group" aria-label={label}>
-      {options.map((option) => (
-        <button key={option.value} type="button" aria-pressed={option.value === value} className={option.value === value ? 'is-active' : ''} onClick={() => onChange(option.value)}>
-          {option.label}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 function RangeControl({
   label,

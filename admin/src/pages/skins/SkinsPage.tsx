@@ -8,11 +8,8 @@ import { useRealtimeRefresh } from '../../shared/realtime';
 import { TagEditor } from '../../shared/TagEditor';
 import type { AccessOrganizer, AdminAccess } from '../../shared/types';
 import { useDebouncedValue } from '../../shared/ui';
-import {
-  Button, EmptyState, ErrorState, Field, Fields, Notice, PageHeader, Panel, SearchInput, SelectField, SelectInput, Skeleton, StatusBadge, Table, TableFoot, TextField,
-  clickableRow, shortDateTime, usePageChrome,
-} from '../../ui/v16';
-import { ChipFilter, InlineTags, Thumb } from '../catalog/catalogUi';
+import { Button, EmptyState, ErrorState, Field, Fields, Notice, PageHeader, Panel, PillButtons, SearchInput, SelectField, SelectInput, Skeleton, StatusBadge, Table, TableFoot, TextField, clickableRow, shortDateTime, usePageChrome } from '../../ui/v16';
+import { InlineTags, Thumb } from '../catalog/catalogUi';
 import {
   SKIN_GAMES, SKIN_OWNER_TYPES, errorMessage, gameLabel, ownerPayload, readSkinArchiveTitle, skinCreatorName, skinListPath, skinOwnerLabel, skinState, uniqueTags,
   skinPath, versionedPreviewUrl, visibilityLabel, type Skin, type SkinCar, type SkinOwnerValue, type SkinsPage as SkinsPageData,
@@ -86,7 +83,7 @@ export function SkinsList({ search, onSearch, onCreate }: { search: string; onSe
       <div className="lsr-toolbar lsr-cat-toolbar">
         <SearchInput value={query} onChange={setQuery} onCommit={(value) => onSearch(value)} placeholder="Название, машина или ID скина" label="Поиск скинов" wide />
         <SelectInput value={ownerTypeFilter} onChange={setOwnerTypeFilter} options={SKIN_OWNER_TYPES} label="Тип владельца" />
-        <ChipFilter label="Игра" value={gameFilter} onChange={setGameFilter} options={[{ value: '', label: 'Все игры' }, ...SKIN_GAMES]} />
+        <PillButtons label="Игра" value={gameFilter} onChange={setGameFilter} options={[{ value: '', label: 'Все игры' }, ...SKIN_GAMES]} />
       </div>
       {error && !loading && <div className="lsr-panel-body"><ErrorState error={error.message} status={error.status} onRetry={() => void load()} /></div>}
       {!error && !loading && !items.length && (

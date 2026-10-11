@@ -3,10 +3,7 @@ import { ApiError, apiFetch } from '../../shared/api';
 import { useRealtimeRefresh } from '../../shared/realtime';
 import { useDebouncedValue } from '../../shared/ui';
 import type { AuditItem } from '../../shared/access-types';
-import {
-  Details, EmbeddedContext, EmptyState, ErrorState, LoadMore, LoadingBlock, Meta, MetaGrid, PageHeader, Panel, SearchInput, Table, TextLink, Toolbar,
-  clickableRow, dateTime, usePageChrome,
-} from '../../ui/v16';
+import { Details, EmbeddedContext, EmptyState, ErrorState, LoadingBlock, LoadMore, Meta, MetaGrid, PageHeader, Panel, RecordTopline, SearchInput, Table, TextLink, Toolbar, clickableRow, dateTime, usePageChrome } from '../../ui/v16';
 import './audit.v16.css';
 
 type AuditPageData = { items: AuditItem[]; nextCursor: string | null };
@@ -116,7 +113,7 @@ function AuditRecord({ item, embedded, onBack }: { item: AuditItem; embedded: bo
   const changes = changeRows(item.changes);
   return (
     <div>
-      <div className="lsr-audit-topline"><button type="button" onClick={onBack}>← Журнал действий</button><b>Запись {item.id}</b></div>
+      <RecordTopline back={{ label: 'Журнал действий', onClick: onBack }} current={`Запись ${item.id}`} />
       <div className="lsr-cols-module">
         <Panel title="Событие аудита">
           <MetaGrid columns={2}>

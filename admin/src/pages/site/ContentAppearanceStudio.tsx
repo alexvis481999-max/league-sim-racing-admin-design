@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import type { PublicationAction, PublicationPlacementCode } from '../../shared/types';
-import { Checkbox, Field, Fields, SelectField, SubTabs } from '../../ui/v16';
+import { Checkbox, Field, Fields, Segmented, SelectField, SubTabs } from '../../ui/v16';
 import type {
   ContentAppearanceConfig,
   ContentPreviewTheme,
@@ -119,13 +119,8 @@ export function ContentAppearanceStudio({ value, onChange, surfaces }: StudioPro
       <div className="lsr-site-studio-group">
         <div className="lsr-between">
           <h4>Цвета · {draftValue.previewTheme === 'dark' ? 'тёмная тема сайта' : 'светлая тема сайта'}</h4>
-          <div className="lsr-site-segment" role="group" aria-label="Тема сайта">
-            {(['dark', 'light'] as ContentPreviewTheme[]).map((key) => (
-              <button key={key} type="button" aria-pressed={draftValue.previewTheme === key} className={draftValue.previewTheme === key ? 'is-active' : ''} onClick={() => setAppearance({ ...draftValue, previewTheme: key })}>
-                {key === 'dark' ? 'Тёмная' : 'Светлая'}
-              </button>
-            ))}
-          </div>
+          <Segmented label="Тема сайта" value={draftValue.previewTheme} onChange={(key) => setAppearance({ ...draftValue, previewTheme: key })}
+            options={[{ value: 'dark', label: 'Тёмная' }, { value: 'light', label: 'Светлая' }] as { value: ContentPreviewTheme; label: string }[]} />
         </div>
         <div className="lsr-site-colors">
           <ColorInput label="Фон" value={theme.surface} onChange={(surface) => updateTheme({ surface }, false)} onCommit={commitDraft} />

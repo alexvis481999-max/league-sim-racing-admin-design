@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ApiError, apiDownload, apiFetch, subscribeAdminAuthChanged } from '../../shared/api';
 import { useRealtimeRefresh } from '../../shared/realtime';
-import {
-  Button, Dialog, EmbeddedContext, EmptyState, ErrorState, Fields, FilterButtons, LoadMore, LoadingBlock, Meta, MetaGrid, Notice, PageHeader, Panel,
-  SelectField, StatusBadge, Table, TextArea, TextField, TextLink, Toolbar, clickableRow, recordTone, shortDateTime, usePageChrome,
-} from '../../ui/v16';
+import { Button, Dialog, EmbeddedContext, EmptyState, ErrorState, Fields, FilterButtons, LoadingBlock, LoadMore, Meta, MetaGrid, Notice, PageHeader, Panel, RecordHead, RecordTopline, SelectField, StatusBadge, StepList, Table, TextArea, TextField, TextLink, Toolbar, clickableRow, recordTone, shortDateTime, usePageChrome } from '../../ui/v16';
 import {
   decisionTones, effectLabel, effectRule, labels, parseSource, reportStatuses, reportTones, reportTransitions, safeLink, sourceLabel, targetLabel,
   type Decision, type MatchOwner, type PageData, type Report, type ReportHistory, type Rules,
@@ -355,11 +352,8 @@ function ProtestCard({ report, history, embedded, locked, busy, onBack, onDownlo
   return (
     <div className="lsr-stack">
       <div>
-        <div className="lsr-off-topline"><button type="button" disabled={locked} onClick={onBack}>← Протесты</button><b>№{report.id}</b></div>
-        <div className="lsr-off-head">
-          <div><h2>Протест №{report.id} · {report.incidentLocation}</h2><p>{meta}</p></div>
-          {badge(report.status, reportTones)}
-        </div>
+        <RecordTopline back={{ label: 'Протесты', onClick: onBack }} disabled={locked} current={`№${report.id}`} />
+        <RecordHead title={`Протест №${report.id} · ${report.incidentLocation}`} badges={badge(report.status, reportTones)} meta={meta} />
       </div>
       <div className="lsr-cols-module">
         <Panel title="Материалы протеста" className={embedded ? 'lsr-off-flat' : undefined}>
@@ -379,14 +373,14 @@ function ProtestCard({ report, history, embedded, locked, busy, onBack, onDownlo
           {!!report.comments?.length && <>
             <div className="lsr-off-divider" />
             <h3 className="lsr-off-h3">Комментарии</h3>
-            <div className="lsr-off-steps">{report.comments.map((c) => <div className="lsr-off-step" key={c.id}><b>#{c.authorId} · {shortDateTime(c.createdAt)}</b><span style={{ whiteSpace: 'pre-wrap' }}>{c.body}</span></div>)}</div>
+            <StepList items={report.comments.map((c) => ({ key: c.id, title: `#${c.authorId} · ${shortDateTime(c.createdAt)}`, detail: <span style={{ whiteSpace: 'pre-wrap' }}>{c.body}</span> }))} />
           </>}
           <div className="lsr-off-divider" />
           <h3 className="lsr-off-h3">История рассмотрения</h3>
-          <div className="lsr-off-steps">
-            <div className="lsr-off-step"><b>Создан протест</b>{report.createdAt ? shortDateTime(report.createdAt) : 'Время создания не передано'} · заявитель #{report.submittedById}</div>
-            {history.map((row, i) => <div className="lsr-off-step" key={i}><b>{labels[row.to] ?? row.to}</b>{shortDateTime(row.at)} · {row.reason}</div>)}
-          </div>
+          <StepList items={[
+            { title: 'Создан протест', detail: `${report.createdAt ? shortDateTime(report.createdAt) : 'Время создания не передано'} · заявитель #${report.submittedById}` },
+            ...history.map((row) => ({ title: labels[row.to] ?? row.to, detail: `${shortDateTime(row.at)} · ${row.reason}` })),
+          ]} />
         </Panel>
         <div className="lsr-stack">{review}{decision}</div>
       </div>

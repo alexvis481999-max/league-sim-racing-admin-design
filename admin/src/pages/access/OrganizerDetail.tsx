@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from '../../shared/api';
 import type { OrganizerRecord } from '../../shared/access-types';
-import { Button, EmptyState, FormGroup, Kpis, LoadingBlock, Notice, Panel, Tabs, TextArea, usePageChrome } from '../../ui/v16';
+import { Button, EmptyState, FormGroup, Kpis, LoadingBlock, Notice, Panel, RecordHead, RecordTopline, SaveBar, Tabs, TextArea, usePageChrome } from '../../ui/v16';
 import { OrganizerLinkFields, OrganizerMainFields, OrganizerQuotaFields } from './AccessForms';
 import { defaultSettings, eventTypeName, limitLabel, quotaFields, quotaModeName, useCommands, type OrganizerDraft } from './access-model';
 
@@ -51,13 +51,8 @@ export function OrganizerDetail({ record, creating, loading, back, onSaved }: { 
   const types = record?.settings.allowedEventRuntimeTypes ?? [];
   return (
     <>
-      <div className="lsr-access-topline"><button type="button" onClick={back}>← Организаторы</button><b>{title}</b></div>
-      <div className="lsr-access-head">
-        <div className="lsr-access-head-main">
-          <h1>{title}</h1>
-          <div className="lsr-access-head-meta">{creating ? 'Создание записи организатора' : `${record!.code} · ID ${record!.id}${presentationOnly && !readOnly ? ' · доступно только оформление' : readOnly ? ' · только просмотр' : ''}`}</div>
-        </div>
-      </div>
+      <RecordTopline back={{ label: 'Организаторы', onClick: back }} current={title} />
+      <RecordHead title={title} meta={creating ? 'Создание записи организатора' : `${record!.code} · ID ${record!.id}${presentationOnly && !readOnly ? ' · доступно только оформление' : readOnly ? ' · только просмотр' : ''}`} />
       <Tabs variant="module" label="Разделы организатора" value={tab} onChange={setTab} items={[{ key: 'main', label: 'Основное' }, { key: 'quotas', label: 'Настройки и квоты', hidden: !showQuotas }, { key: 'appearance', label: 'Оформление' }]} />
       {error && <div className="lsr-access-gap"><Notice tone="danger">{error}</Notice></div>}
       {notice && !dirty && <div className="lsr-access-gap"><Notice role="status">{notice}</Notice></div>}
@@ -85,10 +80,8 @@ export function OrganizerDetail({ record, creating, loading, back, onSaved }: { 
           <p className="lsr-mutedline" style={{ margin: '12px 0 0' }}>Предпросмотр показывает название, описание и ссылку из формы. Параметры темы применяет сайт.</p>
         </Panel>
       </div>}
-      {!readOnly && <div className="lsr-access-savebar">
-        <span className="lsr-muted">{busy ? 'Сохраняем…' : dirty ? 'Есть несохранённые изменения' : creating ? 'Заполните название и код' : 'Изменений нет'}{!valid && !busy ? ' · проверьте поля' : ''}</span>
-        <div className="lsr-hstack"><Button disabled={busy} onClick={reset}>{creating ? 'Отменить' : 'Сбросить'}</Button><Button variant="primary" disabled={busy || !valid || (!creating && !dirty)} onClick={() => void save()}>{creating ? 'Создать организатора' : 'Сохранить изменения'}</Button></div>
-      </div>}
+      {!readOnly && <div className="lsr-access-gap is-top"><SaveBar dirty={dirty && !busy} status={<>{busy ? 'Сохраняем…' : dirty ? 'Есть несохранённые изменения' : creating ? 'Заполните название и код' : 'Изменений нет'}{!valid && !busy ? ' · проверьте поля' : ''}</>}
+        actions={<><Button disabled={busy} onClick={reset}>{creating ? 'Отменить' : 'Сбросить'}</Button><Button variant="primary" disabled={busy || !valid || (!creating && !dirty)} onClick={() => void save()}>{creating ? 'Создать организатора' : 'Сохранить изменения'}</Button></>} /></div>}
     </>
   );
 }

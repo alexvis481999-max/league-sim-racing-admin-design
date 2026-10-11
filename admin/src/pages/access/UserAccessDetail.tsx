@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { apiFetch, putJsonBody } from '../../shared/api';
 import { useRealtimeRefresh } from '../../shared/realtime';
 import type { AccessGrantRecord, AccessRole, OrganizerRecord } from '../../shared/access-types';
-import { Button, Dialog, EmptyState, ErrorState, FormGroup, LoadingBlock, Notice, Panel, PillButtons, Skeleton, StatusBadge, Table, Tabs, TextField, Timeline, dateTime, usePageChrome } from '../../ui/v16';
+import { Button, Dialog, EmptyState, ErrorState, FormGroup, LoadingBlock, Notice, Panel, PillButtons, RecordHead, RecordTopline, SaveBar, Skeleton, StatusBadge, Table, Tabs, TextField, Timeline, dateTime, usePageChrome } from '../../ui/v16';
 import { GrantEditor } from './AccessForms';
 import { errorMessage, errorStatus, eventTypeName, grantStatus, roleTitle, scopeLabel, statusNames, statusTones, useCommands, type AccessUser, type GrantChange, type GrantDraft } from './access-model';
 
@@ -60,14 +60,8 @@ export function UserAccessDetail({ userId, known, roles, organizers, back }: { u
   };
   return (
     <>
-      <div className="lsr-access-topline"><button type="button" onClick={back} disabled={busy}>← Доступы пользователей</button><b>{name}</b></div>
-      <div className="lsr-access-head">
-        <div className="lsr-access-head-main">
-          <h1>{user ? name : <Skeleton width={220} height={22} />}</h1>
-          <div className="lsr-access-head-meta">ID {userId}{user?.steamId ? ` · SteamID ${user.steamId}` : ''}</div>
-        </div>
-        <div className="lsr-page-actions"><Button to={`/users?userId=${encodeURIComponent(userId)}`}>Профиль пилота</Button></div>
-      </div>
+      <RecordTopline back={{ label: 'Доступы пользователей', onClick: back }} disabled={busy} current={name} />
+      <RecordHead title={user ? name : <Skeleton width={220} height={22} />} meta={`ID ${userId}${user?.steamId ? ` · SteamID ${user.steamId}` : ''}`} actions={<Button to={`/users?userId=${encodeURIComponent(userId)}`}>Профиль пилота</Button>} />
       <Tabs variant="module" label="Доступы пользователя" value={tab} onChange={openTab} items={[{ key: 'roles', label: 'Роли', count: grants ? grants.length : null }, { key: 'grant', label: grant?.id ? 'Изменение роли' : 'Выдать роль' }, { key: 'password', label: 'Пароль админки' }]} />
       {error && <div className="lsr-access-gap"><Notice tone="danger">{error}</Notice></div>}
       {notice && <div className="lsr-access-gap"><Notice role="status">{notice}</Notice></div>}
@@ -96,10 +90,8 @@ export function UserAccessDetail({ userId, known, roles, organizers, back }: { u
       </Panel>}
       {tab === 'grant' && grant && <div className="lsr-stack">
         <GrantEditor value={grant} onChange={setGrant} roles={roles} organizers={organizers} disabled={busy} />
-        <div className="lsr-access-savebar">
-          <span className="lsr-muted">{grant.id ? 'Изменение действующего доступа сохраняется с версией записи.' : 'Новый доступ появится в списке ролей после сохранения.'}</span>
-          <div className="lsr-hstack"><Button disabled={busy} onClick={() => { setGrant(null); setTab('roles'); }}>Отменить</Button><Button variant="primary" disabled={busy || !grantValid} onClick={() => void saveGrant()}>{grant.id ? 'Сохранить доступ' : 'Выдать роль'}</Button></div>
-        </div>
+        <SaveBar status={grant.id ? 'Изменение действующего доступа сохраняется с версией записи.' : 'Новый доступ появится в списке ролей после сохранения.'}
+          actions={<><Button disabled={busy} onClick={() => { setGrant(null); setTab('roles'); }}>Отменить</Button><Button variant="primary" disabled={busy || !grantValid} onClick={() => void saveGrant()}>{grant.id ? 'Сохранить доступ' : 'Выдать роль'}</Button></>} />
       </div>}
       {tab === 'password' && <FormGroup title="Пароль админки" description="Второй шаг входа после Steam. Изменение пароля завершит административные сессии пользователя.">
         <div className="lsr-fields"><TextField label="Новый пароль" type="password" autoComplete="new-password" value={password} disabled={busy} onChange={e => setPassword(e.target.value)} /></div>

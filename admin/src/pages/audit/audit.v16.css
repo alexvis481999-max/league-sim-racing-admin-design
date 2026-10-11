@@ -1,7 +1,4 @@
 /* Журнал действий v16 (renderAudit): таблица записей, карточка записи с трассировкой. */
-.lsr-audit-topline { display: flex; align-items: center; gap: 8px; color: var(--lsr-sub); margin-bottom: 15px; font-size: 12px; }
-.lsr-audit-topline button { appearance: none; background: none; border: 0; color: var(--lsr-blue); font-weight: 650; padding: 0; font: inherit; font-weight: 650; cursor: pointer; }
-.lsr-audit-topline b { color: var(--lsr-text); font-weight: 650; }
 .lsr-audit-time { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .lsr-audit-action { font-weight: 690; color: var(--lsr-ink); overflow-wrap: anywhere; }
 .lsr-audit-reason { font-size: 11px; color: var(--lsr-blue); margin-top: 3px; overflow-wrap: anywhere; }
@@ -13,4 +10,4 @@
 .lsr-audit-block > label { display: block; font-size: 12px; color: #53657d; font-weight: 650; margin-bottom: 6px; }
 .lsr-audit-detailbox { background: #f7f9fc; padding: 13px; border-radius: 8px; font-size: 12px; color: #617088; overflow-wrap: anywhere; white-space: pre-wrap; }
 .lsr-audit-embedded .lsr-toolbar { padding: 0 0 12px; border-bottom: 0; }
-.lsr-audit-embedded .lsr-audit-topline { margin-bottom: 12px; }
+.lsr-audit-embedded .lsr-topline { margin-bottom: 12px; }

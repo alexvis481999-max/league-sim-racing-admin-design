@@ -20,7 +20,7 @@ it('shows creator and history and saves the selected car, tags and availability 
   const car = screen.getByRole('combobox', { name: /Машина/ });
   await user.click(car); await user.clear(car); await user.type(car, 'New');
   await user.click(await screen.findByRole('option', { name: 'New car' }));
-  await user.click(screen.getByRole('button', { name: 'acc', exact: true }));
+  await user.click(screen.getByRole('button', { name: 'acc' }));
   await user.click(screen.getByRole('checkbox', { name: 'Доступен для нового выбора' }));
   await user.click(screen.getByRole('button', { name: 'Сохранить' }));
   await waitFor(() => expect(vi.mocked(apiFetch).mock.calls.some(([, init]) => init?.method === 'PATCH')).toBe(true));

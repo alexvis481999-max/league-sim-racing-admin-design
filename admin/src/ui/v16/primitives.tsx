@@ -100,3 +100,26 @@ export function Timeline({ items }: { items: { title: ReactNode; detail?: ReactN
 export function Details({ summary = 'Технические подробности', value }: { summary?: string; value: unknown }) {
   return <details className="lsr-details"><summary>{summary}</summary><pre className="lsr-pre">{JSON.stringify(value, null, 2)}</pre></details>;
 }
+
+/* ---------- record pages (v16 adm-topline + adm-state) ---------- */
+/** "← List · current record" line above a record page; extra nodes (e.g. a return link) follow the name. */
+export function RecordTopline({ back, current, disabled, children }: { back: { label: string; onClick: () => void }; current: ReactNode; disabled?: boolean; children?: ReactNode }) {
+  return <div className="lsr-topline"><button type="button" disabled={disabled} onClick={back.onClick}>← {back.label}</button><b>{current}</b>{children}</div>;
+}
+/** Record heading: optional media (avatar), title with badges, a meta line and actions on the right. */
+export function RecordHead({ media, title, badges, meta, actions }: { media?: ReactNode; title: ReactNode; badges?: ReactNode; meta?: ReactNode; actions?: ReactNode }) {
+  return (
+    <div className="lsr-recordhead">
+      {media}
+      <div className="lsr-recordhead-main">
+        <div className="lsr-recordhead-title"><h1>{title}</h1>{badges}</div>
+        {meta && <div className="lsr-recordhead-meta">{meta}</div>}
+      </div>
+      {actions && <div className="lsr-page-actions">{actions}</div>}
+    </div>
+  );
+}
+/** Vertical sequence of steps or entries (match lifecycle, protest history, comments). */
+export function StepList({ items }: { items: { key?: string | number; title: ReactNode; detail?: ReactNode }[] }) {
+  return <div className="lsr-steplist">{items.map((item, i) => <div className="lsr-steplist-item" key={item.key ?? i}><b>{item.title}</b>{item.detail}</div>)}</div>;
+}

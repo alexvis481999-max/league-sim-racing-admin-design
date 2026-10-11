@@ -3,11 +3,6 @@
 .lsr-cat-toolbar { gap: 9px; padding: 13px 16px; justify-content: flex-start; }
 .lsr-cat-toolbar .lsr-search { min-width: 240px; max-width: none; flex: 1; }
 .lsr-cat-toolbar .lsr-select { min-width: 160px; }
-.lsr-cat-chips { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
-.lsr-cat-chip { border: 1px solid var(--lsr-line); background: #fff; border-radius: 8px; padding: 7px 11px; color: var(--lsr-sub); font-size: 12px; font-weight: 650; white-space: nowrap; line-height: 1.46; }
-.lsr-cat-chip:hover:not(:disabled) { color: var(--lsr-blue); }
-.lsr-cat-chip.is-active { border-color: #d4e1fb; color: var(--lsr-blue); background: #ecf3ff; }
-.lsr-cat-chip.is-sm { padding: 4px 9px; }
 .lsr-cat-tagbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 16px; border-bottom: 1px solid var(--lsr-line); }
 .lsr-cat-tagbar > span { color: var(--lsr-sub); font-size: 12px; margin-right: 2px; }
 

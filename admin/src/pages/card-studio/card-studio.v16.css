@@ -18,10 +18,6 @@
 .lsr-cards-stage.is-compact { padding: 0; border: 0; background: transparent; margin: 0; }
 
 /* segmented switch (v16 mm-tabs look) */
-.lsr-cards-segment { display: inline-flex; gap: 3px; background: #f5f7fa; border: 1px solid var(--lsr-line); border-radius: 9px; padding: 3px; flex-wrap: nowrap; }
-.lsr-cards-segment button { border: 0; background: transparent; border-radius: 6px; padding: 5px 10px; font-size: 12px; font-weight: 700; color: #60728d; white-space: nowrap; }
-.lsr-cards-segment button:hover { color: #285ec5; }
-.lsr-cards-segment button.is-active { background: #fff; color: #285ec5; box-shadow: 0 1px 4px #25385015; }
 
 /* editor */
 .lsr-cards-editor { border: 1px solid var(--lsr-line); border-radius: 11px; background: #fff; width: 100%; box-sizing: border-box; min-width: 0; }

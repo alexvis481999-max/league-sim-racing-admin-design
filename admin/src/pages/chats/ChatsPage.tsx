@@ -2,10 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ApiError, apiFetch, getAdminToken, jsonBody, subscribeAdminAuthChanged } from '../../shared/api';
 import { useRealtimeRefresh } from '../../shared/realtime';
 import { useDebouncedValue } from '../../shared/ui';
-import {
-  Button, Dialog, EmbeddedContext, EmptyState, ErrorState, FilterButtons, LoadMore, LoadingBlock, Notice, PageHeader, Panel, SearchInput, SelectField,
-  StatusBadge, SubTabs, Table, TextArea, TextField, TextLink, Toolbar, Tabs, clickableRow, recordTone, shortDateTime, usePageChrome,
-} from '../../ui/v16';
+import { Button, Dialog, EmbeddedContext, EmptyState, ErrorState, FilterButtons, LoadingBlock, LoadMore, Notice, PageHeader, Panel, RecordTopline, SearchInput, SelectField, StatusBadge, SubTabs, Table, Tabs, TextArea, TextField, TextLink, Toolbar, clickableRow, recordTone, shortDateTime, usePageChrome } from '../../ui/v16';
 import './chats.v16.css';
 
 type Thread = { id: string; type: 'DIRECT' | 'EVENT'; eventId: string | null; status: string; messageCount: number };
@@ -207,7 +204,7 @@ function ThreadReview({ thread, embedded, active, command, onBack }: { thread: T
 
   return (
     <div>
-      <div className="lsr-chat-topline"><button type="button" onClick={onBack}>← Чаты</button><b>{threadTitle(thread)} · {thread.id}</b></div>
+      <RecordTopline back={{ label: 'Чаты', onClick: onBack }} current={`${threadTitle(thread)} · ${thread.id}`} />
       {!reviewId ? (
         <div className="lsr-cols-module">
           <Panel title="Запрос проверки">

@@ -62,12 +62,12 @@ export function FilterButtons<T extends string>({ value, options, onChange, labe
 }
 
 /** Bordered chips for in-panel filters (status, split, day). */
-export function PillButtons<T extends string>({ value, options, onChange, label, size, prefix }: { value: T; options: readonly { value: T; label: ReactNode; title?: string }[]; onChange: (value: T) => void; label: string; size?: 'lg'; prefix?: ReactNode }) {
+export function PillButtons<T extends string>({ value, options, onChange, label, size, prefix }: { value: T; options: readonly { value: T; label: ReactNode; title?: string }[]; onChange: (value: T) => void; label: string; size?: 'sm' | 'lg'; prefix?: ReactNode }) {
   return (
     <div className="lsr-filterbar" role="group" aria-label={label}>
       {prefix && <span className="lsr-filterbar-label">{prefix}</span>}
       {options.map((option) => (
-        <button key={option.value} type="button" title={option.title} className={`lsr-pillbtn${size === 'lg' ? ' is-lg' : ''}${option.value === value ? ' is-active' : ''}`} aria-pressed={option.value === value} onClick={() => onChange(option.value)}>
+        <button key={option.value} type="button" title={option.title} className={`lsr-pillbtn${size ? ` is-${size}` : ''}${option.value === value ? ' is-active' : ''}`} aria-pressed={option.value === value} onClick={() => onChange(option.value)}>
           {option.label}
         </button>
       ))}
@@ -115,5 +115,26 @@ export function Dialog({ open, onClose, title, description, children, actions, w
         {actions && <div className="lsr-dialog-actions">{actions}</div>}
       </div>
     </MuiDialog>
+  );
+}
+
+/** Two-to-four way switch inside a panel (theme, preview size). */
+export function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: readonly { value: T; label: ReactNode }[]; onChange: (value: T) => void; label: string }) {
+  return (
+    <div className="lsr-segment" role="group" aria-label={label}>
+      {options.map((option) => (
+        <button key={option.value} type="button" aria-pressed={option.value === value} className={option.value === value ? 'is-active' : ''} onClick={() => onChange(option.value)}>{option.label}</button>
+      ))}
+    </div>
+  );
+}
+
+/** Form footer: save state (and what to fix) on the left, commands on the right; sticks to the bottom of long forms. */
+export function SaveBar({ status, dirty, extra, actions, sticky = true }: { status: ReactNode; dirty?: boolean; extra?: ReactNode; actions: ReactNode; sticky?: boolean }) {
+  return (
+    <div className={`lsr-panel lsr-savebar${sticky ? ' is-sticky' : ''}`}>
+      <div className="lsr-savebar-status"><span role="status" className={dirty ? 'is-dirty' : undefined}>{status}</span>{extra}</div>
+      <div className="lsr-hstack">{actions}</div>
+    </div>
   );
 }

@@ -1,11 +1,4 @@
 /* Судейство v16 (renderOfficiating): очередь протестов, карточка протеста, правила и решения. */
-.lsr-off-topline { display: flex; align-items: center; gap: 8px; color: var(--lsr-sub); margin-bottom: 15px; font-size: 12px; }
-.lsr-off-topline button { appearance: none; background: none; border: 0; color: var(--lsr-blue); font: inherit; font-weight: 650; padding: 0; cursor: pointer; }
-.lsr-off-topline button:disabled { color: var(--lsr-sub); cursor: default; }
-.lsr-off-topline b { color: var(--lsr-text); font-weight: 650; }
-.lsr-off-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 13px; }
-.lsr-off-head h2 { font-size: 20px; margin: 0 0 4px; color: var(--lsr-ink); }
-.lsr-off-head p { margin: 0; font-size: 12px; color: var(--lsr-sub); }
 .lsr-off-open { appearance: none; background: none; border: 0; padding: 0; font: inherit; font-weight: 690; color: var(--lsr-ink); text-align: left; cursor: pointer; overflow-wrap: anywhere; }
 .lsr-off-open:hover { color: var(--lsr-blue); }
 .lsr-off-open:disabled { cursor: default; color: var(--lsr-sub); }
@@ -19,10 +12,6 @@
 .lsr-off-item + .lsr-off-item { margin-top: 8px; }
 .lsr-off-item b { font-size: 13px; }
 .lsr-off-item small { display: block; margin-top: 3px; color: var(--lsr-sub); font-size: 12px; overflow-wrap: anywhere; }
-.lsr-off-steps { display: grid; gap: 10px; }
-.lsr-off-step { border-left: 2px solid #d8e3f4; padding: 0 0 13px 13px; font-size: 12px; color: #596981; overflow-wrap: anywhere; }
-.lsr-off-step b { display: block; color: var(--lsr-ink); font-size: 12px; }
-.lsr-off-step:last-child { padding-bottom: 0; }
 .lsr-off-statuses { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; border-top: 1px solid var(--lsr-line); padding-top: 16px; margin-top: 16px; }
 .lsr-off-context { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 12px; align-items: end; }
 .lsr-off-context > .lsr-btn { margin-bottom: 1px; }
@@ -35,4 +24,4 @@
 .lsr-off-flat > .lsr-panel-body { padding: 0; }
 .lsr-off-flat .lsr-toolbar { padding: 0 0 12px; border-bottom: 0; }
 .lsr-off-embedded .lsr-off-flat + .lsr-off-flat, .lsr-off-embedded .lsr-cols-module, .lsr-off-embedded .lsr-cols-module + .lsr-off-flat { border-top: 1px solid var(--lsr-line2); padding-top: 16px; }
-@media (max-width: 760px) { .lsr-off-context { grid-template-columns: 1fr; } .lsr-off-head { flex-direction: column; } }
+@media (max-width: 760px) { .lsr-off-context { grid-template-columns: 1fr; } }

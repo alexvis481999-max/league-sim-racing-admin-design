@@ -1,7 +1,5 @@
 import type { ReactNode } from 'react';
-import {
-  Button, Dialog, EmptyState, ErrorState, LoadingBlock, Notice, Panel, StatusBadge, Table, TableFoot, TextLink, clock, dateTime, shortDateTime,
-} from '../../ui/v16';
+import { Button, Dialog, EmptyState, ErrorState, LoadingBlock, Meta, MetaGrid, Notice, Panel, StatusBadge, Table, TableFoot, TextLink, clock, dateTime, shortDateTime } from '../../ui/v16';
 import { carTitle, organizerName, trackTitle, type PracticeCatalog } from './practice-catalog';
 import {
   autostartLabel, cycleStateLabel, cycleTone, disciplineLabel, gameLabel, isPowered, practiceServerStatus, practiceTone,
@@ -84,9 +82,6 @@ export function Pager({ page, total, onPage, busy }: { page: number; total: numb
   );
 }
 
-function Fact({ label, children }: { label: ReactNode; children: ReactNode }) {
-  return <div className="lsr-practice-fact"><div>{label}</div><b>{children ?? '—'}</b></div>;
-}
 
 export function ServerLive({ server, catalog, locked, onCommand }: { server: Server; catalog: PracticeCatalog | null; locked: boolean; onCommand(action: PracticeAction): void }) {
   const cycle = server.currentCycle, c = server.config, tz = c.timezone;
@@ -99,16 +94,16 @@ export function ServerLive({ server, catalog, locked, onCommand }: { server: Ser
     <Panel title="Текущая сессия">
       <div className="lsr-hstack"><ServerStatus server={server} /><b className="lsr-practice-track">{trackTitle(catalog, c.game.track.code, c.game.track.layoutCode)}</b></div>
       <div className="lsr-practice-divider" />
-      <div className="lsr-practice-facts">
-        <Fact label="Игра">{gameLabel(c.gameCode)}</Fact>
-        <Fact label="Погода">{weather ? (weather.mode === 'FIXED' || !weather.mode ? catalog?.weather[weather.presetCode] ?? weather.presetCode : 'Динамическая') : '—'}</Fact>
-        <Fact label="Длительность">{c.sessionDurationMinutes} мин</Fact>
-        <Fact label="Машины">{c.game.cars.allowedCarIds.length ? c.game.cars.allowedCarIds.map((id) => carTitle(catalog, id)).join(', ') : 'Не выбраны'}</Fact>
-        <Fact label="Перезапуск после цикла">30 + {c.extraDelaySeconds} с</Fact>
-        <Fact label="Автозапуск">{autostartLabel(server.status)}</Fact>
-        <Fact label="Запуск цикла">{cycle ? (cycle.startedAt ? dateTime(cycle.startedAt, tz) : 'Ожидание запуска') : '—'}</Fact>
-        <Fact label="Состояние процесса">{cycle ? cycleStateLabel(cycle.resourceState ?? cycle.state) : 'Нет активной сессии'}</Fact>
-      </div>
+      <MetaGrid columns={2}>
+        <Meta label="Игра">{gameLabel(c.gameCode)}</Meta>
+        <Meta label="Погода">{weather ? (weather.mode === 'FIXED' || !weather.mode ? catalog?.weather[weather.presetCode] ?? weather.presetCode : 'Динамическая') : '—'}</Meta>
+        <Meta label="Длительность">{c.sessionDurationMinutes} мин</Meta>
+        <Meta label="Машины">{c.game.cars.allowedCarIds.length ? c.game.cars.allowedCarIds.map((id) => carTitle(catalog, id)).join(', ') : 'Не выбраны'}</Meta>
+        <Meta label="Перезапуск после цикла">30 + {c.extraDelaySeconds} с</Meta>
+        <Meta label="Автозапуск">{autostartLabel(server.status)}</Meta>
+        <Meta label="Запуск цикла">{cycle ? (cycle.startedAt ? dateTime(cycle.startedAt, tz) : 'Ожидание запуска') : '—'}</Meta>
+        <Meta label="Состояние процесса">{cycle ? cycleStateLabel(cycle.resourceState ?? cycle.state) : 'Нет активной сессии'}</Meta>
+      </MetaGrid>
       {cycle?.connectionLostAt && <Notice tone="warning">Связь с сервером потеряна {shortDateTime(cycle.connectionLostAt, tz)}. Состояние уточняется — это не означает остановку.</Notice>}
       {cycle?.failure && <Notice tone="danger">Ошибка сессии: {cycle.failure.code}</Notice>}
       {!cycle && server.lastCycle?.failure && <Notice tone="warning">Последняя сессия завершилась ошибкой: {server.lastCycle.failure.code}</Notice>}

@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import Drawer from '@mui/material/Drawer';
 import { ApiError, apiFetch } from '../../shared/api';
 import { ChatsPage } from '../chats/ChatsPage';
-import { Button, Dialog, EmbeddedContext, EmptyState, ErrorState, LoadingBlock, Meta, MetaGrid, Panel, SelectInput, Skeleton, StatusBadge, Table, Tabs, TextLink, usePageChrome } from '../../ui/v16';
+import { Button, Dialog, EmbeddedContext, EmptyState, ErrorState, LoadingBlock, Meta, MetaGrid, Panel, RecordHead, RecordTopline, SelectInput, Skeleton, StatusBadge, Table, Tabs, TextLink, usePageChrome } from '../../ui/v16';
 import { StateBadge } from './PlayerHistoryTable';
 import { date, display, field, type HistoryRow } from './history';
 import { Avatar } from './UserEditor';
@@ -34,25 +34,23 @@ export function UserProfilePage({ id, back, editor }: { id: string; back(): void
   const select = (next: TabKey) => setParams(old => { const url = new URLSearchParams(old); url.set('userId', id); url.set('tab', next); return url; }, { replace: true });
   return (
     <>
-      <div className="lsr-users-topline">
-        <button type="button" onClick={back}>← Пилоты</button><b>{name}</b>
+      <RecordTopline back={{ label: 'Пилоты', onClick: back }} current={name}>
         {eventId && <><span aria-hidden="true">·</span><TextLink size="sm" to={`/events/${encodeURIComponent(eventId)}?section=participants`}>Вернуться к событию</TextLink></>}
-      </div>
+      </RecordTopline>
       {error && !user && <ErrorState error={error.message} status={error.status} onRetry={() => setRevision(v => v + 1)} />}
       {error && user && <ErrorState compact error={error.message} status={error.status} onRetry={() => setRevision(v => v + 1)} />}
-      {!user && !error && <div className="lsr-users-head"><Skeleton width={52} height={52} style={{ borderRadius: '50%' }} /><div style={{ flex: 1 }}><Skeleton width="30%" height={22} /><Skeleton width="45%" height={13} style={{ marginTop: 8 }} /></div></div>}
+      {!user && !error && <div className="lsr-recordhead"><Skeleton width={52} height={52} style={{ borderRadius: '50%' }} /><div style={{ flex: 1 }}><Skeleton width="30%" height={22} /><Skeleton width="45%" height={13} style={{ marginTop: 8 }} /></div></div>}
       {user && <>
-        <div className="lsr-users-head">
-          <Avatar url={user.presentation.avatarUrl} name={user.presentation.displayName} size={52} />
-          <div className="lsr-users-head-main">
-            <div className="lsr-users-head-title"><h1>{user.presentation.displayName}</h1><StatusBadge variant="badge" status={{ code: user.complete ? 'complete' : 'incomplete', label: user.complete ? 'Профиль заполнен' : 'Профиль не заполнен' }} tone={user.complete ? 'done' : 'current'} /></div>
-            <div className="lsr-users-head-meta">ID {id}{user.shortName ? ` · ${user.shortName}` : ''} · {user.country === 'unknown' ? 'Страна не указана' : countryName(user.country)} · <a className="lsr-link is-sm" href={`https://steamcommunity.com/profiles/${user.steamId}`} target="_blank" rel="noreferrer">Steam · {user.steamId} ↗</a></div>
-          </div>
-          <div className="lsr-page-actions">
+        <RecordHead
+          media={<Avatar url={user.presentation.avatarUrl} name={user.presentation.displayName} size={52} />}
+          title={user.presentation.displayName}
+          badges={<StatusBadge variant="badge" status={{ code: user.complete ? 'complete' : 'incomplete', label: user.complete ? 'Профиль заполнен' : 'Профиль не заполнен' }} tone={user.complete ? 'done' : 'current'} />}
+          meta={<>ID {id}{user.shortName ? ` · ${user.shortName}` : ''} · {user.country === 'unknown' ? 'Страна не указана' : countryName(user.country)} · <a className="lsr-link is-sm" href={`https://steamcommunity.com/profiles/${user.steamId}`} target="_blank" rel="noreferrer">Steam · {user.steamId} ↗</a></>}
+          actions={<>
             <a className="lsr-btn" href={`${siteUrl}/profile/${id}`} target="_blank" rel="noreferrer">Открыть на сайте ↗</a>
             <Button variant="primary" disabled={!user.actions.edit && !user.actions.uploadAvatar} title={!user.actions.edit && !user.actions.uploadAvatar ? 'Ваш доступ не позволяет изменять профиль' : undefined} onClick={() => setEditing(true)}>Редактировать профиль</Button>
-          </div>
-        </div>
+          </>}
+        />
         <Tabs variant="module" label="Разделы профиля" items={tabs} value={tab} onChange={select} />
         {tab === 'overview' && <Overview user={user} onTab={select} />}
         {tab === 'participation' && <Participation id={id} />}

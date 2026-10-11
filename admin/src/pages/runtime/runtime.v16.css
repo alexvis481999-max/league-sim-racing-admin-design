@@ -5,10 +5,6 @@
 .lsr-runtime-lede { margin: 0; padding: 14px 20px; color: var(--lsr-sub); font-size: 13px; border-bottom: 1px solid var(--lsr-line2); }
 .lsr-runtime .lsr-table tbody tr.is-selected td { background: #f2f7ff; }
 .lsr-runtime .lsr-table tbody tr.is-selected td:first-child { box-shadow: inset 3px 0 0 var(--lsr-blue); }
-.lsr-runtime-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-.lsr-runtime-fact { min-width: 0; }
-.lsr-runtime-fact > div { font-size: 12px; color: var(--lsr-sub); margin-bottom: 2px; }
-.lsr-runtime-fact > b { display: block; font-size: 13px; color: var(--lsr-ink); overflow-wrap: anywhere; }
 .lsr-runtime-divider { height: 1px; background: var(--lsr-line); margin: 16px 0; }
 .lsr-runtime .lsr-panel-body > .lsr-notice { margin-top: 12px; }
 .lsr-runtime .lsr-panel-body > .lsr-runtime-divider + .lsr-notice { margin-top: 0; }
@@ -18,7 +14,6 @@
 .lsr-runtime-pad { padding: 0 20px 18px; }
 .lsr-runtime .lsr-log { max-height: 520px; }
 @media (max-width: 700px) {
-  .lsr-runtime-facts { grid-template-columns: 1fr; }
   .lsr-runtime-rows { padding: 4px 6px; }
   .lsr-runtime-lede { padding: 12px 14px; }
 }

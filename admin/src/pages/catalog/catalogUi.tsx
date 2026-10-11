@@ -1,19 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { Tag } from '../../ui/v16';
 
-/** Bordered filter chips of the v16 module toolbar (`adm-chip`). */
-export function ChipFilter<T extends string>({ value, options, onChange, label, size }: { value: T; options: readonly { value: T; label: ReactNode }[]; onChange: (value: T) => void; label: string; size?: 'sm' }) {
-  return (
-    <div className="lsr-cat-chips" role="group" aria-label={label}>
-      {options.map((option) => (
-        <button key={option.value} type="button" className={`lsr-cat-chip${size === 'sm' ? ' is-sm' : ''}${option.value === value ? ' is-active' : ''}`} aria-pressed={option.value === value} onClick={() => onChange(option.value)}>
-          {option.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 /** Preview image; a missing or unreadable file shows an empty frame instead of a broken image. */
 export function Thumb({ src, alt, className = 'lsr-cat-thumb', glyph = '▤' }: { src: string | null | undefined; alt: string; className?: string; glyph?: string }) {
   const [failed, setFailed] = useState<string | null>(null);

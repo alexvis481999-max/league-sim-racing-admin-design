@@ -7,7 +7,7 @@ import type { Document, Draft, Resolution, Settings } from './types';
 import { Field } from './Fields';
 import { EditingRestrictions, FieldCapabilities, FieldFocus, FieldIssues, read, write } from './form-state';
 import { ParticipantFields, ProgramFields, ConditionsFields } from './ScenarioFields';
-import { Button, EmptyState, LoadingBlock, Notice, PageHeader, Panel } from '../../ui/v16';
+import { Button, EmptyState, LoadingBlock, Notice, PageHeader, Panel, SaveBar } from '../../ui/v16';
 
 type Step = 'base' | 'program' | 'conditions' | 'participants' | 'appearance' | 'review';
 /** Steps of the v16 creator; base and appearance are both parts of the server section "description". */
@@ -179,15 +179,13 @@ export function ScenarioBuilder({ descriptionOnly = false, draftId, initialDocum
                         }} />}
                       </>
                     )}
-                    <div className="lsr-panel lsr-savebar">
-                      <span className="lsr-muted">{visible[index]?.label} · {resolution ? (resolution.canPublish ? 'проверка пройдена' : `замечаний: ${resolution.issues.length}`) : 'проверяем на сервере…'}</span>
-                      <div className="lsr-hstack" style={{ gap: 8 }}>
+                    <SaveBar status={<>{visible[index]?.label} · {resolution ? (resolution.canPublish ? 'проверка пройдена' : `замечаний: ${resolution.issues.length}`) : 'проверяем на сервере…'}</>}
+                      actions={<>
                         <Button disabled={index <= 0} onClick={() => go(visible[index - 1].id)}>← Назад</Button>
                         {index < visible.length - 1 ? <Button variant="primary" onClick={() => go(visible[index + 1].id)}>Продолжить →</Button>
                           : edit ? <Button variant="primary" disabled={disabled || !resolution?.canPublish} onClick={() => void save(false)}>Сохранить изменения</Button>
                           : <Button variant="primary" disabled={busy || loading || (!resolution?.canPublish && !publicationPending) || !!draft?.publishedEventId} onClick={() => void save(true)}>Опубликовать</Button>}
-                      </div>
-                    </div>
+                      </>} />
                   </div>
                   <aside className="lsr-stack lsr-sticky">
                     <Panel title={edit ? 'Сводка изменений' : 'Сводка черновика'}>

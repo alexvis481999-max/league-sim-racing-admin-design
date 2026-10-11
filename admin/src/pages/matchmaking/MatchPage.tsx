@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { displayRuntimeStatus } from '../../../../shared/presentation';
-import { Button, EmptyState, ErrorState, Kpis, LoadingBlock, Notice, PageHeader, Panel, RowItem, StatusBadge, dateTime, shortDateTime, usePageChrome } from '../../ui/v16';
+import { Button, EmptyState, ErrorState, Kpis, LoadingBlock, Notice, PageHeader, Panel, RowItem, StatusBadge, StepList, dateTime, shortDateTime, usePageChrome } from '../../ui/v16';
 import { MatchRounds } from './MatchDetails';
 import type { CatalogItem } from './pool-catalog';
 import { conditionLine, durationText, matchPlayers, matchScore, matchStatusLabel, matchTone, matchWinner, type Match } from './matchmaking-model';
@@ -57,12 +57,12 @@ export function MatchPage({ matchId, match, loading, error, onRetry, page, queue
             <div className="lsr-mm-score"><b>{score ?? '—'}</b><small>{score ? 'По раундам' : 'Без счёта'}</small></div>
           </div>
           <div className="lsr-mm-divider" />
-          <div className="lsr-mm-steps">
-            <div className="lsr-mm-step"><b>Создание матча</b>{dateTime(match.createdAt, timeZone)}</div>
-            <div className="lsr-mm-step"><b>Выбор машин и готовность</b>Готовы {readyCount} из {match.players.length}{match.readyDeadlineAt ? ` · срок до ${dateTime(match.readyDeadlineAt, timeZone)}` : ''}</div>
-            <div className="lsr-mm-step"><b>Игровая сессия</b>{match.runtimeSessionId ? `Сессия №${match.runtimeSessionId}${match.runtimeStatus ? ` · ${displayRuntimeStatus(match.runtimeStatus)}` : ''}` : match.runtimeStatus === 'WAITING_CAPACITY' ? 'Ожидает свободный сервер' : 'Не запускалась'}</div>
-            <div className="lsr-mm-step"><b>Завершение</b>{match.finishedAt ? dateTime(match.finishedAt, timeZone) : 'Матч не завершён'}</div>
-          </div>
+          <StepList items={[
+            { title: 'Создание матча', detail: dateTime(match.createdAt, timeZone) },
+            { title: 'Выбор машин и готовность', detail: `Готовы ${readyCount} из ${match.players.length}${match.readyDeadlineAt ? ` · срок до ${dateTime(match.readyDeadlineAt, timeZone)}` : ''}` },
+            { title: 'Игровая сессия', detail: match.runtimeSessionId ? `Сессия №${match.runtimeSessionId}${match.runtimeStatus ? ` · ${displayRuntimeStatus(match.runtimeStatus)}` : ''}` : match.runtimeStatus === 'WAITING_CAPACITY' ? 'Ожидает свободный сервер' : 'Не запускалась' },
+            { title: 'Завершение', detail: match.finishedAt ? dateTime(match.finishedAt, timeZone) : 'Матч не завершён' },
+          ]} />
           <div className="lsr-mm-divider" />
           <h3 className="lsr-mm-heading">Раунды и заезды</h3>
           <MatchRounds match={match} />
