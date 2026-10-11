@@ -9,7 +9,8 @@
     "test": "vitest run --passWithNoTests",
     "test:coverage": "vitest run --config vitest.coverage.config.ts --coverage",
     "typecheck": "tsc --noEmit",
-    "preview": "vite preview --port 4174"
+    "preview": "vite preview --port 4174",
+    "mock-api": "node dev/mock-api/server.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

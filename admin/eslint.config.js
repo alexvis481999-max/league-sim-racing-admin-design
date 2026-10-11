@@ -8,6 +8,7 @@ export default tseslint.config(
   { ignores: ['dist'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  { files: ['dev/**/*.mjs'], languageOptions: { globals: globals.node } },
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
