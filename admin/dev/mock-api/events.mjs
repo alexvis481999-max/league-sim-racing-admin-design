@@ -194,7 +194,9 @@ function eventActions(e) {
   ];
 }
 export function eventSummary(e) {
-  const { settings: _s, blocks: _b, ...rest } = e;
+  const rest = { ...e };
+  delete rest.settings;
+  delete rest.blocks;
   return { ...rest, displayStatus: eventStatusView(e), displaySchedule: displaySchedule(e), observedAt: NOW, actions: eventActions(e) };
 }
 export function listEvents(q) {

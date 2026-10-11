@@ -39,7 +39,7 @@ export function practiceBlocks(now) {
   return [{ id: '7201', key: 'practice', title: 'Открытая практика', type: 'PRACTICE', start: s, end: e, execution: execution(s, e, now), splits: 0, seed: 4, track: 'monza', group: null, settings: { durationMinutes: 240, maxParticipants: 24 } }];
 }
 
-export function timeAttackBlocks(now) {
+export function timeAttackBlocks() {
   const s = at('2026-09-28', '12:00'), e = at('2026-10-04', '22:00');
   const rows = PILOTS.slice(0, 10).map((p, i) => ({ position: i + 1, participantId: p.participantId, bestAttemptMilliseconds: 106000 + i * 1079, points: null, attempts: (i % 5) + 1 }));
   const attempts = PILOTS.slice(0, 10).flatMap((p, i) => Array.from({ length: (i % 3) + 1 }, (_, j) => ({
